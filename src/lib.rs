@@ -155,11 +155,6 @@ pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Book<K>, Tr
         });
     }
 
-    if heap.len() == 1 {
-        let single = heap.peek().unwrap().clone();
-        heap.push(single);
-    }
-
     while heap.len() >= 2 {
         let id = arena.len();
 
