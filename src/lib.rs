@@ -80,13 +80,13 @@ impl<K: Eq + Hash + Clone> Book<K> {
         self.book
     }
 
-    pub fn get<Q>(&self, k: &Q) -> Option<&BitVec>
+    pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&BitVec>
         where K: Borrow<Q>, Q: Hash + Eq
     {
         self.book.get(k)
     }
 
-    pub fn encode<Q>(&self, buffer: &mut BitVec, k: &Q) -> Result<(), EncodeError>
+    pub fn encode<Q: ?Sized>(&self, buffer: &mut BitVec, k: &Q) -> Result<(), EncodeError>
         where K: Borrow<Q>, Q: Hash + Eq
     {
         match self.book.get(k) {
@@ -237,7 +237,7 @@ mod tests {
         let (book, tree) = codebook(&sample);
 
         let mut buffer = BitVec::new();
-        book.encode(&mut buffer, &"hello").unwrap();
+        book.encode(&mut buffer, "hello").unwrap();
 
         let mut decoder = tree.decoder(buffer);
         assert_eq!(decoder.next(), Some("hello"));
@@ -249,7 +249,7 @@ mod tests {
         let (book, tree) = codebook(&sample);
 
         let mut buffer = BitVec::new();
-        assert!(book.encode(&mut buffer, &"hello").is_err());
+        assert!(book.encode(&mut buffer, "hello").is_err());
 
         let mut decoder = tree.decoder(buffer);
         assert_eq!(decoder.next(), None);
