@@ -33,8 +33,6 @@
 //! // frequencies).
 //! let (book, tree) = codebook(&weights);
 //!
-//! println!("{:?}", book);
-//!
 //! // More frequent symbols will be encoded with fewer bits.
 //! assert!(book.get("CG").map_or(0, |cg| cg.len()) <
 //!         book.get("TG").map_or(0, |ag| ag.len()));
