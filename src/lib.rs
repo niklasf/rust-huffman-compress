@@ -14,8 +14,8 @@ pub struct Tree<K> {
     arena: Vec<Node<K>>,
 }
 
-impl<'a, K: Eq + Hash + Clone + 'a> Tree<K> {
-    pub fn decoder<I>(&'a self, iterable: I) -> Decoder<'a, I, K>
+impl<K: Eq + Hash + Clone> Tree<K> {
+    pub fn decoder<'a, I>(&'a self, iterable: I) -> Decoder<'a, I, K>
         where I: IntoIterator<Item=bool>
     {
         Decoder {
@@ -28,6 +28,32 @@ impl<'a, K: Eq + Hash + Clone + 'a> Tree<K> {
 pub struct Decoder<'a, I: IntoIterator<Item=bool>, K: 'a> {
     tree: &'a Tree<K>,
     iter: I::IntoIter,
+}
+
+impl<'a, I: IntoIterator<Item=bool>, K: Clone> Iterator for Decoder<'a, I, K> {
+    type Item = K;
+
+    fn next(&mut self) -> Option<K> {
+        let mut node = &self.tree.arena[self.tree.root];
+
+        loop {
+            match node.data {
+                NodeData::Leaf { ref symbol } => return Some(symbol.clone()),
+                NodeData::Branch { left, right } => {
+                    let bit = match self.iter.next() {
+                        Some(bit) => bit,
+                        None => return None,
+                    };
+
+                    node = if bit {
+                        &self.tree.arena[left]
+                    } else {
+                        &self.tree.arena[right]
+                    };
+                }
+            }
+        }
+    }
 }
 
 pub struct Book<K> {
@@ -194,5 +220,13 @@ mod tests {
         book.encode(&mut buffer, &3).unwrap();
         book.encode(&mut buffer, &4).unwrap();
         book.encode(&mut buffer, &5).unwrap();
+
+        let mut decoder = tree.decoder(buffer);
+        assert_eq!(decoder.next(), Some(1));
+        assert_eq!(decoder.next(), Some(2));
+        assert_eq!(decoder.next(), Some(3));
+        assert_eq!(decoder.next(), Some(4));
+        assert_eq!(decoder.next(), Some(5));
+        assert_eq!(decoder.next(), None);
     }
 }
