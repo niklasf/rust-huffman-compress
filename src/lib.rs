@@ -9,9 +9,20 @@ use std::fmt;
 
 use bit_vec::BitVec;
 
+/// A binary tree used for decoding.
 pub struct Tree<K> {
     root: usize,
     arena: Vec<Node<K>>,
+}
+
+struct Node<K> {
+    parent: Option<usize>,
+    data: NodeData<K>
+}
+
+enum NodeData<K> {
+    Leaf { symbol: K },
+    Branch { left: usize, right: usize },
 }
 
 impl<K: Clone> Tree<K> {
@@ -56,6 +67,7 @@ impl<'a, K: Clone, I: IntoIterator<Item=bool>> Iterator for Decoder<'a, K, I> {
     }
 }
 
+/// A codebook used for encoding.
 pub struct Book<K> {
     book: HashMap<K, BitVec>,
 }
@@ -104,35 +116,20 @@ impl<K: Eq + Hash + Clone> Book<K> {
     }
 }
 
+/// Tried to encode an unknown symbol.
 #[derive(Debug)]
 pub struct EncodeError;
 
 impl fmt::Display for EncodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        "encode error".fmt(f)
+        self.description().fmt(f)
     }
 }
 
 impl Error for EncodeError {
     fn description(&self) -> &str {
-        "encode error"
+        "encode error: tried to encode an unknown symbol"
     }
-}
-
-struct Node<K> {
-    parent: Option<usize>,
-    data: NodeData<K>
-}
-
-enum NodeData<K> {
-    Leaf { symbol: K },
-    Branch { left: usize, right: usize },
-}
-
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
-struct HeapData {
-    weight: u64,
-    id: usize,
 }
 
 pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Tree<K>, Book<K>) {
@@ -192,6 +189,12 @@ pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Tree<K>, Bo
     };
 
     (tree, book)
+}
+
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
+struct HeapData {
+    weight: u64,
+    id: usize,
 }
 
 #[cfg(test)]
