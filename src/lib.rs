@@ -14,8 +14,8 @@ pub struct Tree<K> {
     arena: Vec<Node<K>>,
 }
 
-impl<K: Eq + Hash + Clone> Tree<K> {
-    pub fn decoder<'a, I>(&'a self, iterable: I) -> Decoder<'a, I, K>
+impl<K: Clone> Tree<K> {
+    pub fn decoder<'a, I>(&'a self, iterable: I) -> Decoder<'a, K, I>
         where I: IntoIterator<Item=bool>
     {
         Decoder {
@@ -25,12 +25,12 @@ impl<K: Eq + Hash + Clone> Tree<K> {
     }
 }
 
-pub struct Decoder<'a, I: IntoIterator<Item=bool>, K: 'a> {
+pub struct Decoder<'a, K: 'a, I: IntoIterator<Item=bool>> {
     tree: &'a Tree<K>,
     iter: I::IntoIter,
 }
 
-impl<'a, I: IntoIterator<Item=bool>, K: Clone> Iterator for Decoder<'a, I, K> {
+impl<'a, K: Clone, I: IntoIterator<Item=bool>> Iterator for Decoder<'a, K, I> {
     type Item = K;
 
     fn next(&mut self) -> Option<K> {
@@ -120,7 +120,6 @@ impl Error for EncodeError {
 }
 
 struct Node<K> {
-    weight: u64,
     parent: Option<usize>,
     data: NodeData<K>
 }
@@ -152,8 +151,6 @@ pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Tree<K>, Bo
         });
 
         arena.push(Node {
-            weight: *weight,
-            //id,
             parent: None,
             data: NodeData::Leaf {
                 symbol: symbol.clone()
@@ -176,9 +173,7 @@ pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Tree<K>, Bo
         });
 
         arena.push(Node {
-            weight: left.weight + right.weight,
             parent: None,
-            //id,
             data: NodeData::Branch {
                 left: left.id,
                 right: right.id
