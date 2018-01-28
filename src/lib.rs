@@ -8,6 +8,12 @@
 
 //! Huffman compression given a probability distribution over arbitrary
 //! symbols.
+//!
+//! # Examples
+//!
+//! ```rust
+//!
+//! ```
 
 #![doc(html_root_url = "https://docs.rs/huffman-compress/0.1.0")]
 
@@ -47,6 +53,18 @@ enum NodeData<K> {
 }
 
 impl<K: Clone> Tree<K> {
+    /// An iterator decoding symbols from source of bits.
+    ///
+    /// If there are no symbols the decoded sequence is empty without consuming
+    /// any bits.
+    ///
+    /// If there is only one symbol the iterator will yield that symbol
+    /// **infinitely** often without consuming any bits.
+    ///
+    /// # Errors
+    ///
+    /// If the source is exhausted no further symbols will be coded
+    /// (not even incomplete ones).
     pub fn decoder<'a, I>(&'a self, iterable: I) -> Decoder<'a, K, I>
         where I: IntoIterator<Item=bool>
     {
@@ -57,6 +75,7 @@ impl<K: Clone> Tree<K> {
     }
 }
 
+/// Decodes symbols from a source of bits.
 #[derive(Debug)]
 pub struct Decoder<'a, K: 'a, I: IntoIterator<Item=bool>> {
     tree: &'a Tree<K>,
@@ -106,16 +125,25 @@ impl<K: Eq + Hash + fmt::Debug> fmt::Debug for Book<K> {
 }
 
 impl<K: Eq + Hash + Clone> Book<K> {
+    /// Returns the underlying hash map.
     pub fn into_inner(self) -> HashMap<K, BitVec> {
         self.book
     }
 
+    /// Returns the code word for a given symbol.
     pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&BitVec>
         where K: Borrow<Q>, Q: Hash + Eq
     {
         self.book.get(k)
     }
 
+    /// Writes the code word for the given key to a bit vector.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`EncodeError`] if `k` is not in the codebook.
+    ///
+    /// [`EncodeError`]: struct.EncodeError.html
     pub fn encode<Q: ?Sized>(&self, buffer: &mut BitVec, k: &Q) -> Result<(), EncodeError>
         where K: Borrow<Q>, Q: Hash + Eq
     {
@@ -165,7 +193,8 @@ impl Error for EncodeError {
     }
 }
 
-/// Creates a book and tree pair from a map of symbols and their weights.
+/// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
+/// from a map of symbols and their weights.
 pub fn codebook<K: Eq + Hash + Clone, W: Saturating + Clone + Ord>(weights: &HashMap<K, W>) -> (Book<K>, Tree<K>) {
     let num_symbols = weights.len();
     let mut heap = BinaryHeap::with_capacity(num_symbols);
