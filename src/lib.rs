@@ -45,7 +45,10 @@ impl<'a, K: Clone, I: IntoIterator<Item=bool>> Iterator for Decoder<'a, K, I> {
     type Item = K;
 
     fn next(&mut self) -> Option<K> {
-        let mut node = &self.tree.arena[self.tree.root];
+        let mut node = match self.tree.arena.get(self.tree.root) {
+            Some(root) => root,
+            None => return None, // empty tree
+        };
 
         loop {
             match node.data {
@@ -132,19 +135,16 @@ impl Error for EncodeError {
     }
 }
 
-pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Tree<K>, Book<K>) {
+/// Creates a book and tree pair from a map of symbols and their weights.
+pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Book<K>, Tree<K>) {
     let num_symbols = weights.len();
-
-    let mut heap = BinaryHeap::new();
-
+    let mut heap = BinaryHeap::with_capacity(num_symbols);
     let mut arena: Vec<Node<K>> = Vec::with_capacity(num_symbols);
 
     for (symbol, weight) in weights {
-        let id = arena.len();
-
         heap.push(HeapData {
             weight: *weight,
-            id,
+            id: arena.len(),
         });
 
         arena.push(Node {
@@ -153,6 +153,11 @@ pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Tree<K>, Bo
                 symbol: symbol.clone()
             }
         });
+    }
+
+    if heap.len() == 1 {
+        let single = heap.peek().unwrap().clone();
+        heap.push(single);
     }
 
     while heap.len() >= 2 {
@@ -180,18 +185,16 @@ pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Tree<K>, Bo
 
     let mut book = Book::with_capacity(num_symbols);
 
-    let root = heap.pop().unwrap().id;
-    book.build(&arena, &arena[root], BitVec::new());
-
-    let tree = Tree {
-        root,
-        arena,
-    };
-
-    (tree, book)
+    match heap.pop() {
+        Some(HeapData { id: root, .. }) => {
+            book.build(&arena, &arena[root], BitVec::new());
+            (book, Tree { root, arena })
+        },
+        None => (book, Tree { root: 0, arena })
+    }
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Eq, PartialEq, Ord, PartialOrd, Clone)]
 struct HeapData {
     weight: u64,
     id: usize,
@@ -210,7 +213,7 @@ mod tests {
         sample.insert(4, 1);
         sample.insert(5, 1);
 
-        let (tree, book) = codebook(&sample);
+        let (book, tree) = codebook(&sample);
 
         let mut buffer = BitVec::new();
         book.encode(&mut buffer, &1).unwrap();
@@ -225,6 +228,18 @@ mod tests {
         assert_eq!(decoder.next(), Some(3));
         assert_eq!(decoder.next(), Some(4));
         assert_eq!(decoder.next(), Some(5));
+        assert_eq!(decoder.next(), None);
+    }
+
+    #[test]
+    fn test_empty() {
+        let sample: HashMap<&str, _> = HashMap::new();
+        let (book, tree) = codebook(&sample);
+
+        let mut buffer = BitVec::new();
+        assert!(book.encode(&mut buffer, &"hello").is_err());
+
+        let mut decoder = tree.decoder(buffer);
         assert_eq!(decoder.next(), None);
     }
 }
