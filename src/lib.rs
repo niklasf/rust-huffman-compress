@@ -65,6 +65,7 @@ extern crate bit_vec;
 extern crate num_traits;
 
 use std::borrow::Borrow;
+use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::collections::BinaryHeap;
 use std::error::Error;
@@ -290,10 +291,33 @@ pub fn codebook<K: Eq + Hash + Clone, W: Saturating + Clone + Ord>(weights: &Has
     }
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd, Clone)]
-struct HeapData<W: Saturating + Clone + Ord> {
+#[derive(Eq, PartialEq)]
+struct HeapData<W> {
     weight: W,
     id: usize,
+}
+
+impl<W: Clone> Clone for HeapData<W> {
+    fn clone(&self) -> Self {
+        HeapData {
+            weight: self.weight.clone(),
+            id: self.id
+        }
+    }
+}
+
+impl<W: Ord> Ord for HeapData<W> {
+    fn cmp(&self, other: &Self) -> Ordering {
+        // reverse ordering (smallest first in heap)
+        other.weight.cmp(&self.weight)
+    }
+}
+
+impl<W: PartialOrd> PartialOrd for HeapData<W> {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        // reverse ordering (smallest first in heap)
+        other.weight.partial_cmp(&self.weight)
+    }
 }
 
 #[cfg(test)]
