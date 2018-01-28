@@ -5,3 +5,4 @@ authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 
 [dependencies]
 bit-vec = "0.4"
+num-traits = "0.1"

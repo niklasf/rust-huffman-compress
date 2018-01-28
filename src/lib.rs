@@ -1,4 +1,5 @@
 extern crate bit_vec;
+extern crate num_traits;
 
 use std::borrow::Borrow;
 use std::collections::HashMap;
@@ -8,6 +9,8 @@ use std::hash::Hash;
 use std::fmt;
 
 use bit_vec::BitVec;
+
+pub use num_traits::ops::saturating::Saturating;
 
 /// A binary tree used for decoding.
 pub struct Tree<K> {
@@ -136,14 +139,14 @@ impl Error for EncodeError {
 }
 
 /// Creates a book and tree pair from a map of symbols and their weights.
-pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Book<K>, Tree<K>) {
+pub fn codebook<K: Eq + Hash + Clone, W: Saturating + Clone + Ord>(weights: &HashMap<K, W>) -> (Book<K>, Tree<K>) {
     let num_symbols = weights.len();
     let mut heap = BinaryHeap::with_capacity(num_symbols);
     let mut arena: Vec<Node<K>> = Vec::with_capacity(num_symbols);
 
     for (symbol, weight) in weights {
         heap.push(HeapData {
-            weight: *weight,
+            weight: weight.clone(),
             id: arena.len(),
         });
 
@@ -165,7 +168,7 @@ pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Book<K>, Tr
         arena[right.id].parent = Some(id);
 
         heap.push(HeapData {
-            weight: left.weight + right.weight,
+            weight: left.weight.saturating_add(right.weight),
             id
         });
 
@@ -190,8 +193,8 @@ pub fn codebook<K: Eq + Hash + Clone>(weights: &HashMap<K, u64>) -> (Book<K>, Tr
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd, Clone)]
-struct HeapData {
-    weight: u64,
+struct HeapData<W: Saturating + Clone + Ord> {
+    weight: W,
     id: usize,
 }
 
@@ -240,7 +243,7 @@ mod tests {
 
     #[test]
     fn test_empty() {
-        let sample: HashMap<&str, _> = HashMap::new();
+        let sample: HashMap<&str, u8> = HashMap::new();
         let (book, tree) = codebook(&sample);
 
         let mut buffer = BitVec::new();
