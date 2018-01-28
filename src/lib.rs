@@ -1,10 +1,46 @@
+extern crate bit_vec;
+
 use std::hash::Hash;
-use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::collections::BinaryHeap;
 
+use bit_vec::BitVec;
+
+pub struct Tree<K> {
+    root: usize,
+    arena: Vec<Node<K>>,
+}
+
+pub struct Book<K> {
+    book: HashMap<K, BitVec>,
+}
+
+impl<K: Eq + Hash + Clone> Book<K> {
+    fn with_capacity(num_symbols: usize) -> Book<K> {
+        Book {
+            book: HashMap::with_capacity(num_symbols),
+        }
+    }
+
+    fn build(&mut self, arena: &Vec<Node<K>>, node: &Node<K>, word: BitVec) {
+        match node.data {
+            NodeData::Leaf { ref symbol } => {
+                self.book.insert(symbol.clone(), word);
+            },
+            NodeData::Branch  { left, right } => {
+                let mut left_word = word.clone();
+                left_word.push(true);
+                self.build(arena, &arena[left], left_word);
+
+                let mut right_word = word;
+                right_word.push(false);
+                self.build(arena, &arena[right], right_word);
+            },
+        }
+    }
+}
+
 struct Node<K> {
-    //id: usize,
     weight: u64,
     parent: Option<usize>,
     data: NodeData<K>
@@ -12,7 +48,7 @@ struct Node<K> {
 
 enum NodeData<K> {
     Leaf { symbol: K },
-    Twig { left: usize, right: usize },
+    Branch { left: usize, right: usize },
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
@@ -21,10 +57,12 @@ struct HeapData {
     id: usize,
 }
 
-fn codebook<K: Eq + Hash>(weights: HashMap<K, u64>) {
+pub fn codebook<K: Eq + Hash + Clone>(weights: HashMap<K, u64>) -> (Tree<K>, Book<K>) {
+    let num_symbols = weights.len();
+
     let mut heap = BinaryHeap::new();
 
-    let mut arena: Vec<Node<K>> = Vec::with_capacity(weights.len());
+    let mut arena: Vec<Node<K>> = Vec::with_capacity(num_symbols);
 
     for (symbol, weight) in weights {
         let id = arena.len();
@@ -62,18 +100,22 @@ fn codebook<K: Eq + Hash>(weights: HashMap<K, u64>) {
             weight: left.weight + right.weight,
             parent: None,
             //id,
-            data: NodeData::Twig {
+            data: NodeData::Branch {
                 left: left.id,
                 right: right.id
             }
         });
     }
-}
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
+    let mut book = Book::with_capacity(num_symbols);
+
+    let root = heap.pop().unwrap().id;
+    book.build(&arena, &arena[root], BitVec::new());
+
+    let tree = Tree {
+        root,
+        arena,
+    };
+
+    (tree, book)
 }
