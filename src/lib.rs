@@ -1,5 +1,6 @@
 extern crate bit_vec;
 
+use std::borrow::Borrow;
 use std::hash::Hash;
 use std::collections::HashMap;
 use std::collections::BinaryHeap;
@@ -16,6 +17,16 @@ pub struct Book<K> {
 }
 
 impl<K: Eq + Hash + Clone> Book<K> {
+    pub fn into_inner(self) -> HashMap<K, BitVec> {
+        self.book
+    }
+
+    pub fn get<Q>(&self, k: &Q) -> Option<&BitVec>
+        where K: Borrow<Q>, Q: Hash + Eq
+    {
+        self.book.get(k)
+    }
+
     fn with_capacity(num_symbols: usize) -> Book<K> {
         Book {
             book: HashMap::with_capacity(num_symbols),
