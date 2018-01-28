@@ -1,3 +1,7 @@
+#![doc(html_root_url = "https://docs.rs/huffman-compress/0.1.0")]
+
+#![warn(missing_debug_implementations)]
+
 extern crate bit_vec;
 extern crate num_traits;
 
@@ -13,16 +17,19 @@ use bit_vec::BitVec;
 pub use num_traits::ops::saturating::Saturating;
 
 /// A binary tree used for decoding.
+#[derive(Debug)]
 pub struct Tree<K> {
     root: usize,
     arena: Vec<Node<K>>,
 }
 
+#[derive(Debug)]
 struct Node<K> {
     parent: Option<usize>,
     data: NodeData<K>
 }
 
+#[derive(Debug)]
 enum NodeData<K> {
     Leaf { symbol: K },
     Branch { left: usize, right: usize },
@@ -39,6 +46,7 @@ impl<K: Clone> Tree<K> {
     }
 }
 
+#[derive(Debug)]
 pub struct Decoder<'a, K: 'a, I: IntoIterator<Item=bool>> {
     tree: &'a Tree<K>,
     iter: I::IntoIter,
@@ -76,6 +84,14 @@ impl<'a, K: Clone, I: IntoIterator<Item=bool>> Iterator for Decoder<'a, K, I> {
 /// A codebook used for encoding.
 pub struct Book<K> {
     book: HashMap<K, BitVec>,
+}
+
+impl<K: Eq + Hash + fmt::Debug> fmt::Debug for Book<K> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.debug_struct("Book")
+            .field("book", &self.book)
+            .finish()
+    }
 }
 
 impl<K: Eq + Hash + Clone> Book<K> {
