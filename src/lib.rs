@@ -212,7 +212,6 @@ mod tests {
         sample.insert(3, 1);
         sample.insert(4, 1);
         sample.insert(5, 1);
-
         let (book, tree) = codebook(&sample);
 
         let mut buffer = BitVec::new();
@@ -229,6 +228,19 @@ mod tests {
         assert_eq!(decoder.next(), Some(4));
         assert_eq!(decoder.next(), Some(5));
         assert_eq!(decoder.next(), None);
+    }
+
+    #[test]
+    fn test_single() {
+        let mut sample = HashMap::new();
+        sample.insert("hello", 1);
+        let (book, tree) = codebook(&sample);
+
+        let mut buffer = BitVec::new();
+        book.encode(&mut buffer, &"hello").unwrap();
+
+        let mut decoder = tree.decoder(buffer);
+        assert_eq!(decoder.next(), Some("hello"));
     }
 
     #[test]
