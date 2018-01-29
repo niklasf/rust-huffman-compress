@@ -106,7 +106,7 @@ impl<K: Clone> Tree<K> {
     ///
     /// If the source is exhausted no further symbols will be coded
     /// (not even incomplete ones).
-    pub fn decoder<'a, I>(&'a self, iterable: I) -> Decoder<'a, K, I>
+    pub fn decoder<I>(&self, iterable: I) -> Decoder<K, I>
         where I: IntoIterator<Item=bool>
     {
         Decoder {
