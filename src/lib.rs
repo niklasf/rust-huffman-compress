@@ -20,7 +20,7 @@
 //! # fn try_main() -> Result<(), Box<Error>> {
 //! use std::collections::HashMap;
 //! use bit_vec::BitVec;
-//! use huffman_compress::{ Book, Tree, codebook };
+//! use huffman_compress::{Book, Tree, codebook};
 //!
 //! let mut weights = HashMap::new();
 //! weights.insert("CG", 293);
@@ -67,7 +67,7 @@ use std::cmp::Ordering;
 use std::collections::HashMap;
 use std::collections::BinaryHeap;
 use std::error::Error;
-use std::hash::Hash;
+use std::hash::{Hash, BuildHasher};
 use std::fmt;
 
 use bit_vec::BitVec;
@@ -189,9 +189,11 @@ impl<K: Eq + Hash + Clone> Book<K> {
         where K: Borrow<Q>, Q: Hash + Eq
     {
         match self.book.get(k) {
-            Some(code) => Ok(buffer.extend(code)),
-            None => Err(EncodeError { }),
+            Some(code) => buffer.extend(code),
+            None => return Err(EncodeError { }),
         }
+
+        Ok(())
     }
 
     fn with_capacity(num_symbols: usize) -> Book<K> {
@@ -200,7 +202,7 @@ impl<K: Eq + Hash + Clone> Book<K> {
         }
     }
 
-    fn build(&mut self, arena: &Vec<Node<K>>, node: &Node<K>, word: BitVec) {
+    fn build(&mut self, arena: &[Node<K>], node: &Node<K>, word: BitVec) {
         match node.data {
             NodeData::Leaf { ref symbol } => {
                 self.book.insert(symbol.clone(), word);
@@ -236,7 +238,7 @@ impl Error for EncodeError {
 
 /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
 /// from a map of symbols and their weights.
-pub fn codebook<K: Eq + Hash + Clone, W: Saturating + Clone + Ord>(weights: &HashMap<K, W>) -> (Book<K>, Tree<K>) {
+pub fn codebook<K: Eq + Hash + Clone, W: Saturating + Clone + Ord, S: BuildHasher>(weights: &HashMap<K, W, S>) -> (Book<K>, Tree<K>) {
     let num_symbols = weights.len();
     let mut heap = BinaryHeap::with_capacity(num_symbols);
     let mut arena: Vec<Node<K>> = Vec::with_capacity(num_symbols);
