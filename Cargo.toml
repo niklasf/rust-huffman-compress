@@ -12,3 +12,6 @@ description = "Huffman compression given a probability distribution over arbitra
 [dependencies]
 bit-vec = "0.4"
 num-traits = "0.1"
+
+[badges]
+travis-ci = { repository = "niklasf/rust-huffman-compress", branch = "master" }

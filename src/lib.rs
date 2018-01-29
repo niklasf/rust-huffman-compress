@@ -20,7 +20,7 @@
 //! # fn try_main() -> Result<(), Box<Error>> {
 //! use std::collections::HashMap;
 //! use bit_vec::BitVec;
-//! use huffman_compress::{ Book, Tree, codebook };
+//! use huffman_compress::{Book, Tree, codebook};
 //!
 //! let mut weights = HashMap::new();
 //! weights.insert("CG", 293);
@@ -35,7 +35,7 @@
 //!
 //! // More frequent symbols will be encoded with fewer bits.
 //! assert!(book.get("CG").map_or(0, |cg| cg.len()) <
-//!         book.get("TG").map_or(0, |ag| ag.len()));
+//!         book.get("AG").map_or(0, |ag| ag.len()));
 //!
 //! // Encode some symbols using the book.
 //! let mut buffer = BitVec::new();
@@ -68,7 +68,7 @@ use std::collections::HashMap;
 use std::collections::hash_map;
 use std::collections::BinaryHeap;
 use std::error::Error;
-use std::hash::Hash;
+use std::hash::{Hash, BuildHasher};
 use std::fmt;
 
 use bit_vec::BitVec;
@@ -107,7 +107,7 @@ impl<K: Clone> Tree<K> {
     ///
     /// If the source is exhausted no further symbols will be coded
     /// (not even incomplete ones).
-    pub fn decoder<'a, I>(&'a self, iterable: I) -> Decoder<'a, K, I>
+    pub fn decoder<I>(&self, iterable: I) -> Decoder<K, I>
         where I: IntoIterator<Item=bool>
     {
         Decoder {
@@ -221,9 +221,11 @@ impl<K: Eq + Hash + Clone> Book<K> {
               Q: Hash + Eq
     {
         match self.book.get(k) {
-            Some(code) => Ok(buffer.extend(code)),
-            None => Err(EncodeError { }),
+            Some(code) => buffer.extend(code),
+            None => return Err(EncodeError { }),
         }
+
+        Ok(())
     }
 
     fn with_capacity(num_symbols: usize) -> Book<K> {
@@ -232,7 +234,7 @@ impl<K: Eq + Hash + Clone> Book<K> {
         }
     }
 
-    fn build(&mut self, arena: &Vec<Node<K>>, node: &Node<K>, word: BitVec) {
+    fn build(&mut self, arena: &[Node<K>], node: &Node<K>, word: BitVec) {
         match node.data {
             NodeData::Leaf { ref symbol } => {
                 self.book.insert(symbol.clone(), word);
@@ -268,7 +270,11 @@ impl Error for EncodeError {
 
 /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
 /// from a map of symbols and their weights.
-pub fn codebook<K: Eq + Hash + Clone, W: Saturating + Clone + Ord>(weights: &HashMap<K, W>) -> (Book<K>, Tree<K>) {
+pub fn codebook<K, W, S>(weights: &HashMap<K, W, S>) -> (Book<K>, Tree<K>)
+    where K: Hash + Eq + Clone,
+          W: Saturating + Ord + Clone,
+          S: BuildHasher
+{
     let num_symbols = weights.len();
     let mut heap = BinaryHeap::with_capacity(num_symbols);
     let mut arena: Vec<Node<K>> = Vec::with_capacity(num_symbols);

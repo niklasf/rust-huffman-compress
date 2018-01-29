@@ -16,7 +16,7 @@ extern crate huffman_compress;
 
 use std::collections::HashMap;
 use bit_vec::BitVec;
-use huffman_compress::{ Book, Tree, codebook };
+use huffman_compress::{Book, Tree, codebook};
 
 let mut weights = HashMap::new();
 weights.insert("CG", 293);
@@ -31,7 +31,7 @@ let (book, tree) = codebook(&weights);
 
 // More frequent symbols will be encoded with fewer bits.
 assert!(book.get("CG").map_or(0, |cg| cg.len()) <
-        book.get("TG").map_or(0, |ag| ag.len()));
+        book.get("AG").map_or(0, |ag| ag.len()));
 
 // Encode some symbols using the book.
 let mut buffer = BitVec::new();
