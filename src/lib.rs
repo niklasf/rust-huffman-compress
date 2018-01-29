@@ -238,7 +238,11 @@ impl Error for EncodeError {
 
 /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
 /// from a map of symbols and their weights.
-pub fn codebook<K: Eq + Hash + Clone, W: Saturating + Clone + Ord, S: BuildHasher>(weights: &HashMap<K, W, S>) -> (Book<K>, Tree<K>) {
+pub fn codebook<K, W, S>(weights: &HashMap<K, W, S>) -> (Book<K>, Tree<K>)
+    where K: Hash + Eq + Clone,
+          W: Saturating + Ord + Clone,
+          S: BuildHasher
+{
     let num_symbols = weights.len();
     let mut heap = BinaryHeap::with_capacity(num_symbols);
     let mut arena: Vec<Node<K>> = Vec::with_capacity(num_symbols);
