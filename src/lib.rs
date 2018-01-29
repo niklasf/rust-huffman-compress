@@ -65,6 +65,7 @@ extern crate num_traits;
 use std::borrow::Borrow;
 use std::cmp::Ordering;
 use std::collections::HashMap;
+use std::collections::hash_map;
 use std::collections::BinaryHeap;
 use std::error::Error;
 use std::hash::Hash;
@@ -75,19 +76,19 @@ use bit_vec::BitVec;
 pub use num_traits::ops::saturating::Saturating;
 
 /// A binary tree used for decoding.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Tree<K> {
     root: usize,
     arena: Vec<Node<K>>,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 struct Node<K> {
     parent: Option<usize>,
     data: NodeData<K>
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 enum NodeData<K> {
     Leaf { symbol: K },
     Branch { left: usize, right: usize },
@@ -153,6 +154,7 @@ impl<'a, K: Clone, I: IntoIterator<Item=bool>> Iterator for Decoder<'a, K, I> {
 }
 
 /// A codebook used for encoding.
+#[derive(Clone)]
 pub struct Book<K> {
     book: HashMap<K, BitVec>,
 }
@@ -171,11 +173,40 @@ impl<K: Eq + Hash + Clone> Book<K> {
         self.book
     }
 
+    /// An iterator visiting all symbols in arbitrary order.
+    pub fn symbols(&self) -> hash_map::Keys<K, BitVec> {
+        self.book.keys()
+    }
+
+    /// An iterator visiting all symbol and code word pairs in arbitrary order.
+    pub fn iter(&self) -> hash_map::Iter<K, BitVec> {
+        self.book.iter()
+    }
+
+    /// Returns the number of symbols in the book.
+    pub fn len(&self) -> usize {
+        self.book.len()
+    }
+
+    /// Returns true if the map has no symbols.
+    pub fn is_empty(&self) -> bool {
+        self.book.is_empty()
+    }
+
     /// Returns the code word for a given symbol.
     pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&BitVec>
-        where K: Borrow<Q>, Q: Hash + Eq
+        where K: Borrow<Q>,
+              Q: Hash + Eq
     {
         self.book.get(k)
+    }
+
+    /// Returns true if the book contains the specified symbol.
+    pub fn contains_symbol<Q: ?Sized>(&self, k: &Q) -> bool
+        where K: Borrow<Q>,
+              Q: Hash + Eq
+    {
+        self.book.contains_key(k)
     }
 
     /// Writes the code word for the given key to a bit vector.
@@ -186,7 +217,8 @@ impl<K: Eq + Hash + Clone> Book<K> {
     ///
     /// [`EncodeError`]: struct.EncodeError.html
     pub fn encode<Q: ?Sized>(&self, buffer: &mut BitVec, k: &Q) -> Result<(), EncodeError>
-        where K: Borrow<Q>, Q: Hash + Eq
+        where K: Borrow<Q>,
+              Q: Hash + Eq
     {
         match self.book.get(k) {
             Some(code) => Ok(buffer.extend(code)),
@@ -219,7 +251,7 @@ impl<K: Eq + Hash + Clone> Book<K> {
 }
 
 /// Tried to encode an unknown symbol.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct EncodeError;
 
 impl fmt::Display for EncodeError {
