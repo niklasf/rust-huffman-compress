@@ -16,7 +16,7 @@ extern crate huffman_compress;
 
 use std::collections::HashMap;
 use bit_vec::BitVec;
-use huffman_compress::{ Book, Tree, codebook };
+use huffman_compress::{Book, Tree, codebook};
 
 let mut weights = HashMap::new();
 weights.insert("CG", 293);
