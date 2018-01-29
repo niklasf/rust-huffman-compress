@@ -6,8 +6,8 @@
 // option. This file may not be copied, modified, or distributed
 // except according to those terms.
 
-//! Huffman compression given a probability distribution over arbitrary
-//! symbols.
+//! [Huffman compression](https://en.wikipedia.org/wiki/Huffman_coding)
+//! given a probability distribution over arbitrary symbols.
 //!
 //! # Examples
 //!

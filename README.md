@@ -1,7 +1,8 @@
 huffman-compress
 ================
 
-Huffman compression given a probability distribution over arbitrary symbols.
+[Huffman compression](https://en.wikipedia.org/wiki/Huffman_coding)
+given a probability distribution over arbitrary symbols.
 
 [![Build Status](https://travis-ci.org/niklasf/rust-huffman-compress.svg?branch=master)](https://travis-ci.org/niklasf/rust-huffman-compress)
 [![crates.io](https://img.shields.io/crates/v/huffman-compress.svg)](https://crates.io/crates/huffman-compress)
