@@ -68,7 +68,7 @@ use std::collections::HashMap;
 use std::collections::hash_map;
 use std::collections::BinaryHeap;
 use std::error::Error;
-use std::hash::{Hash, BuildHasher};
+use std::hash::Hash;
 use std::fmt;
 
 use bit_vec::BitVec;
@@ -270,12 +270,13 @@ impl Error for EncodeError {
 
 /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
 /// from a map of symbols and their weights.
-pub fn codebook<K, W, S>(weights: &HashMap<K, W, S>) -> (Book<K>, Tree<K>)
-    where K: Hash + Eq + Clone,
-          W: Saturating + Ord + Clone,
-          S: BuildHasher
+pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
+    where I: IntoIterator<Item = (&'a K, &'a W)>,
+          K: 'a + Hash + Eq + Clone,
+          W: 'a + Saturating + Ord + Clone
 {
-    let num_symbols = weights.len();
+    let weights = weights.into_iter();
+    let (num_symbols, _) = weights.size_hint();
     let mut heap = BinaryHeap::with_capacity(num_symbols);
     let mut arena: Vec<Node<K>> = Vec::with_capacity(num_symbols);
 
@@ -383,6 +384,30 @@ mod tests {
         assert_eq!(decoder.next(), Some(3));
         assert_eq!(decoder.next(), Some(4));
         assert_eq!(decoder.next(), Some(5));
+        assert_eq!(decoder.next(), None);
+    }
+
+    #[test]
+    fn test_uniform_from_static() {
+        const WEIGHTS: &[(&char, &usize)] = &[
+            (&'a', &1),
+            (&'b', &1),
+            (&'c', &1),
+            (&'d', &1),
+        ];
+        let (book, tree) = codebook(WEIGHTS.iter().cloned());
+
+        let mut buffer = BitVec::new();
+        book.encode(&mut buffer, &'a').unwrap();
+        book.encode(&mut buffer, &'b').unwrap();
+        book.encode(&mut buffer, &'c').unwrap();
+        book.encode(&mut buffer, &'d').unwrap();
+
+        let mut decoder = tree.decoder(buffer);
+        assert_eq!(decoder.next(), Some('a'));
+        assert_eq!(decoder.next(), Some('b'));
+        assert_eq!(decoder.next(), Some('c'));
+        assert_eq!(decoder.next(), Some('d'));
         assert_eq!(decoder.next(), None);
     }
 
