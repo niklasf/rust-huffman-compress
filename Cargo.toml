@@ -9,9 +9,16 @@ repository = "https://github.com/niklasf/rust-huffman-compress"
 categories = ["compression", "encoding", "algorithms"]
 description = "Huffman compression given a probability distribution over arbitrary symbols"
 
+[[bench]]
+name = "benches"
+harness = false
+
 [dependencies]
 bit-vec = "0.4"
 num-traits = "0.1"
+
+[dev-dependencies]
+bencher = "0.1"
 
 [badges]
 travis-ci = { repository = "niklasf/rust-huffman-compress", branch = "master" }
