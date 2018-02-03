@@ -95,7 +95,7 @@ enum NodeData<K> {
 }
 
 impl<K: Clone> Tree<K> {
-    /// An iterator decoding symbols from source of bits.
+    /// An iterator decoding symbols from a source of bits.
     ///
     /// If there are no symbols the decoded sequence is empty without consuming
     /// any bits.
