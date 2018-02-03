@@ -143,15 +143,10 @@ impl<'a, K: Clone, I: IntoIterator<Item=bool>> Iterator for Decoder<'a, K, I> {
             match node.data {
                 NodeData::Leaf { ref symbol } => return Some(symbol.clone()),
                 NodeData::Branch { left, right } => {
-                    let bit = match self.iter.next() {
-                        Some(bit) => bit,
+                    node = match self.iter.next() {
+                        Some(true) => &self.tree.arena[left],
+                        Some(false) => &self.tree.arena[right],
                         None => return None,
-                    };
-
-                    node = if bit {
-                        &self.tree.arena[left]
-                    } else {
-                        &self.tree.arena[right]
                     };
                 }
             }
