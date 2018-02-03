@@ -339,16 +339,6 @@ struct HeapData<K, W> {
     id: usize,
 }
 
-impl<K: Clone, W: Clone> Clone for HeapData<K, W> {
-    fn clone(&self) -> Self {
-        HeapData {
-            weight: Reverse(self.weight.0.clone()),
-            symbol: self.symbol.clone(),
-            id: self.id
-        }
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
