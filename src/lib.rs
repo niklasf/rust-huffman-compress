@@ -411,7 +411,8 @@ struct HeapData<K, W> {
     id: usize,
 }
 
-/// Shortcut for `CodeBuilder::from_iter(weights).finish()`.
+/// Shortcut for
+/// [`CodeBuilder::from_iter(weights).finish()`](struct.CodeBuilder.html).
 pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
     where I: IntoIterator<Item = (&'a K, &'a W)>,
           K: 'a + Ord + Clone,
