@@ -505,6 +505,7 @@ mod tests {
 
         let mut decoder = tree.decoder(buffer);
         assert_eq!(decoder.next(), Some("hello"));
+        assert_eq!(decoder.next(), Some("hello")); // repeats
     }
 
     quickcheck! {
