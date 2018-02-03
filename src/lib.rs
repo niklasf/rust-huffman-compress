@@ -267,7 +267,7 @@ pub struct CodeBuilder<K: Ord, W: Ord> {
     arena: Vec<Node<K>>,
 }
 
-impl<K: Ord + Clone, W: Saturating + Ord + Clone> CodeBuilder<K, W> {
+impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
     /// Creates a new, empty `CodeBuilder<K, W>`.
     pub fn new() -> CodeBuilder<K, W> {
         CodeBuilder {
@@ -334,13 +334,13 @@ impl<K: Ord + fmt::Debug, W: Ord + fmt::Debug> fmt::Debug for CodeBuilder<K, W> 
     }
 }
 
-impl<K: Ord + Clone, W: Saturating + Ord + Clone> Default for CodeBuilder<K, W> {
+impl<K: Ord + Clone, W: Saturating + Ord> Default for CodeBuilder<K, W> {
     fn default() -> CodeBuilder<K, W> {
         CodeBuilder::new()
     }
 }
 
-impl<K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(K, W)> for CodeBuilder<K, W> {
+impl<K: Ord + Clone, W: Saturating + Ord> FromIterator<(K, W)> for CodeBuilder<K, W> {
     fn from_iter<T>(weights: T) -> CodeBuilder<K, W>
         where T: IntoIterator<Item = (K, W)>
     {
@@ -352,7 +352,7 @@ impl<K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(K, W)> for CodeB
     }
 }
 
-impl<K: Ord + Clone, W: Saturating + Ord + Clone> Extend<(K, W)> for CodeBuilder<K, W> {
+impl<K: Ord + Clone, W: Saturating + Ord> Extend<(K, W)> for CodeBuilder<K, W> {
     fn extend<T>(&mut self, weights: T)
         where T: IntoIterator<Item = (K, W)>
     {
