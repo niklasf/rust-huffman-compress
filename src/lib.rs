@@ -70,6 +70,7 @@ use std::cmp::Reverse;
 use std::collections::{BinaryHeap, BTreeMap, btree_map};
 use std::error::Error;
 use std::fmt;
+use std::iter::FromIterator;
 
 use bit_vec::BitVec;
 
@@ -260,6 +261,130 @@ impl Error for EncodeError {
     }
 }
 
+/// Collects information about symbols and their weights.
+pub struct CodeBuilder<K: Ord, W: Ord> {
+    heap: BinaryHeap<HeapData<K, W>>,
+    arena: Vec<Node<K>>,
+}
+
+impl<K: Ord + Clone, W: Saturating + Ord + Clone> CodeBuilder<K, W> {
+    /// Creates a new, empty `CodeBuilder<K, W>`.
+    pub fn new() -> CodeBuilder<K, W> {
+        CodeBuilder {
+            heap: BinaryHeap::new(),
+            arena: Vec::new(),
+        }
+    }
+
+    /// Creates a new, empty `CodeBuilder<K, W>` and preallocates space
+    /// for `capacity` symbols.
+    pub fn with_capacity(capacity: usize) -> CodeBuilder<K, W> {
+        CodeBuilder {
+            heap: BinaryHeap::with_capacity(capacity),
+            arena: Vec::with_capacity(capacity),
+        }
+    }
+
+    /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
+    /// for encoding and decoding.
+    pub fn finish(mut self) -> (Book<K>, Tree<K>) {
+        while self.heap.len() >= 2 {
+            let id = self.arena.len();
+
+            let left = self.heap.pop().unwrap();
+            let right = self.heap.pop().unwrap();
+
+            self.arena[left.id].parent = Some(id);
+            self.arena[right.id].parent = Some(id);
+
+            self.heap.push(HeapData {
+                weight: Reverse(left.weight.0.saturating_add(right.weight.0)),
+                symbol: cmp::max(left.symbol, right.symbol),
+                id
+            });
+
+            self.arena.push(Node {
+                parent: None,
+                data: NodeData::Branch {
+                    left: left.id,
+                    right: right.id
+                }
+            });
+        }
+
+        let mut book = Book::new();
+
+        match self.heap.pop() {
+            Some(HeapData { id: root, .. }) => {
+                book.build(&self.arena, &self.arena[root], BitVec::new());
+                (book, Tree { root, arena: self.arena })
+            },
+            None => (book, Tree { root: 0, arena: self.arena })
+        }
+    }
+}
+
+impl<K: Ord + fmt::Debug, W: Ord + fmt::Debug> fmt::Debug for CodeBuilder<K, W> {
+    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
+        fmt.debug_struct("CodeBuilder")
+            .field("arena", &self.arena)
+            .finish()
+    }
+}
+
+impl<K: Ord + Clone, W: Saturating + Ord + Clone> Default for CodeBuilder<K, W> {
+    fn default() -> CodeBuilder<K, W> {
+        CodeBuilder::new()
+    }
+}
+
+impl<K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(K, W)> for CodeBuilder<K, W> {
+    fn from_iter<T>(weights: T) -> CodeBuilder<K, W>
+        where T: IntoIterator<Item = (K, W)>
+    {
+        let iter = weights.into_iter();
+        let (size_hint, _) = iter.size_hint();
+        let mut code = CodeBuilder::with_capacity(size_hint);
+        code.extend(iter);
+        code
+    }
+}
+
+impl<K: Ord + Clone, W: Saturating + Ord + Clone> Extend<(K, W)> for CodeBuilder<K, W> {
+    fn extend<T>(&mut self, weights: T)
+        where T: IntoIterator<Item = (K, W)>
+    {
+        for (symbol, weight) in weights {
+            self.heap.push(HeapData {
+                weight: Reverse(weight),
+                symbol: symbol.clone(),
+                id: self.arena.len(),
+            });
+
+            self.arena.push(Node {
+                parent: None,
+                data: NodeData::Leaf { symbol },
+            });
+        }
+    }
+}
+
+impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(&'a K, &'a W)> for CodeBuilder<K, W> {
+    fn from_iter<T>(weights: T) -> CodeBuilder<K, W>
+        where T: IntoIterator<Item = (&'a K, &'a W)>
+    {
+        CodeBuilder::from_iter(weights.into_iter().map(|(k, v)| (k.clone(), v.clone())))
+    }
+}
+
+impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> Extend<(&'a K, &'a W)> for CodeBuilder<K, W> {
+    fn extend<T>(&mut self, weights: T)
+        where T: IntoIterator<Item = (&'a K, &'a W)>
+    {
+        self.extend(weights.into_iter().map(|(k, v)| (k.clone(), v.clone())));
+    }
+}
+
 /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
 /// from a map of symbols and their weights.
 ///
@@ -277,59 +402,7 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
           K: 'a + Ord + Clone,
           W: 'a + Saturating + Ord + Clone
 {
-    let weights = weights.into_iter();
-    let (size_hint, _) = weights.size_hint();
-    let mut heap = BinaryHeap::with_capacity(size_hint);
-    let mut arena: Vec<Node<K>> = Vec::with_capacity(size_hint);
-
-    for (symbol, weight) in weights {
-        heap.push(HeapData {
-            weight: Reverse(weight.clone()),
-            symbol: symbol.clone(),
-            id: arena.len(),
-        });
-
-        arena.push(Node {
-            parent: None,
-            data: NodeData::Leaf {
-                symbol: symbol.clone()
-            }
-        });
-    }
-
-    while heap.len() >= 2 {
-        let id = arena.len();
-
-        let left = heap.pop().unwrap();
-        let right = heap.pop().unwrap();
-
-        arena[left.id].parent = Some(id);
-        arena[right.id].parent = Some(id);
-
-        heap.push(HeapData {
-            weight: Reverse(left.weight.0.saturating_add(right.weight.0)),
-            symbol: cmp::max(left.symbol, right.symbol),
-            id
-        });
-
-        arena.push(Node {
-            parent: None,
-            data: NodeData::Branch {
-                left: left.id,
-                right: right.id
-            }
-        });
-    }
-
-    let mut book = Book::new();
-
-    match heap.pop() {
-        Some(HeapData { id: root, .. }) => {
-            book.build(&arena, &arena[root], BitVec::new());
-            (book, Tree { root, arena })
-        },
-        None => (book, Tree { root: 0, arena })
-    }
+    CodeBuilder::from_iter(weights).finish()
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
