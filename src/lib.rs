@@ -262,7 +262,18 @@ impl Error for EncodeError {
     }
 }
 
-/// Collects information about symbols and their weights.
+/// Collects information about symbols and their weights used to construct
+/// a Huffman code.
+///
+/// # Stability
+///
+/// The output is guaranteed to be deterministic and stable across semver
+/// compatible releases if:
+///
+/// * There is a strict order on the symbols `K`.
+/// * No duplicate symbols are added.
+///
+/// The ordering of symbols will be used to break ties when weights are equal.
 pub struct CodeBuilder<K: Ord, W: Ord> {
     heap: BinaryHeap<HeapData<K, W>>,
     arena: Vec<Node<K>>,
@@ -284,6 +295,20 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
             heap: BinaryHeap::with_capacity(capacity),
             arena: Vec::with_capacity(capacity),
         }
+    }
+
+    /// Adds a symbol and weight pair.
+    pub fn push(&mut self, symbol: K, weight: W) {
+        self.heap.push(HeapData {
+            weight: Reverse(weight),
+            symbol: symbol.clone(),
+            id: self.arena.len(),
+        });
+
+        self.arena.push(Node {
+            parent: None,
+            data: NodeData::Leaf { symbol },
+        });
     }
 
     /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
@@ -358,16 +383,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> Extend<(K, W)> for CodeBuilder<K, W> {
         where T: IntoIterator<Item = (K, W)>
     {
         for (symbol, weight) in weights {
-            self.heap.push(HeapData {
-                weight: Reverse(weight),
-                symbol: symbol.clone(),
-                id: self.arena.len(),
-            });
-
-            self.arena.push(Node {
-                parent: None,
-                data: NodeData::Leaf { symbol },
-            });
+            self.push(symbol, weight);
         }
     }
 }
@@ -388,31 +404,20 @@ impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> Extend<(&'a K, &'a W)> for
     }
 }
 
-/// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
-/// from a map of symbols and their weights.
-///
-/// # Implementation details
-///
-/// The output is guaranteed to be deterministic and stable across semver
-/// compatible releases if:
-///
-/// * There is a strict order on the symbols `K`
-/// * `weights` yields no duplicate symbols
-///
-/// The ordering of symbols will be used to break ties when weights are equal.
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
+struct HeapData<K, W> {
+    weight: Reverse<W>,
+    symbol: K, // tie breaker
+    id: usize,
+}
+
+/// Shortcut for `CodeBuilder::from_iter(weights).finish()`.
 pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
     where I: IntoIterator<Item = (&'a K, &'a W)>,
           K: 'a + Ord + Clone,
           W: 'a + Saturating + Ord + Clone
 {
     CodeBuilder::from_iter(weights).finish()
-}
-
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
-struct HeapData<K, W> {
-    weight: Reverse<W>,
-    symbol: K, // tie breaker
-    id: usize,
 }
 
 #[cfg(test)]
@@ -428,7 +433,7 @@ mod tests {
         sample.insert(3, 1);
         sample.insert(4, 1);
         sample.insert(5, 1);
-        let (book, tree) = codebook(&sample);
+        let (book, tree) = CodeBuilder::from_iter(sample).finish();
 
         let mut buffer = BitVec::new();
         book.encode(&mut buffer, &1).unwrap();
@@ -472,9 +477,9 @@ mod tests {
 
     #[test]
     fn test_single() {
-        let mut sample = HashMap::new();
-        sample.insert("hello", 1);
-        let (book, tree) = codebook(&sample);
+        let mut builder = CodeBuilder::new();
+        builder.push("hello", 1);
+        let (book, tree) = builder.finish();
 
         let mut buffer = BitVec::new();
         book.encode(&mut buffer, "hello").unwrap();
@@ -485,8 +490,7 @@ mod tests {
 
     #[test]
     fn test_empty() {
-        let sample: HashMap<&str, u8> = HashMap::new();
-        let (book, tree) = codebook(&sample);
+        let (book, tree) = CodeBuilder::<&str, i32>::new().finish();
 
         let mut buffer = BitVec::new();
         assert!(book.encode(&mut buffer, "hello").is_err());

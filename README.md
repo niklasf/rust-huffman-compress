@@ -11,12 +11,10 @@ Examples
 --------
 
 ```rust
-extern crate bit_vec;
-extern crate huffman_compress;
-
+use std::iter::FromIterator;
 use std::collections::HashMap;
 use bit_vec::BitVec;
-use huffman_compress::{Book, Tree, codebook};
+use huffman_compress::{CodeBuilder, Book, Tree};
 
 let mut weights = HashMap::new();
 weights.insert("CG", 293);
@@ -27,7 +25,7 @@ weights.insert("TG", 1);
 
 // Construct a Huffman code based on the weights (e.g. counts or relative
 // frequencies).
-let (book, tree) = codebook(&weights);
+let (book, tree) = CodeBuilder::from_iter(weights).finish();
 
 // More frequent symbols will be encoded with fewer bits.
 assert!(book.get("CG").map_or(0, |cg| cg.len()) <
