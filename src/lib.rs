@@ -309,7 +309,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
 
             self.heap.push(HeapData {
                 weight: Reverse(left.weight.0.saturating_add(right.weight.0)),
-                symbol: cmp::max(left.symbol, right.symbol),
+                symbol: cmp::min(left.symbol, right.symbol),
                 id
             });
 
