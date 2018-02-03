@@ -484,6 +484,17 @@ mod tests {
     }
 
     #[test]
+    fn test_empty() {
+        let (book, tree) = CodeBuilder::<&str, i32>::new().finish();
+
+        let mut buffer = BitVec::new();
+        assert!(book.encode(&mut buffer, "hello").is_err());
+
+        let mut decoder = tree.decoder(buffer);
+        assert_eq!(decoder.next(), None);
+    }
+
+    #[test]
     fn test_single() {
         let mut builder = CodeBuilder::new();
         builder.push("hello", 1);
@@ -496,18 +507,23 @@ mod tests {
         assert_eq!(decoder.next(), Some("hello"));
     }
 
-    #[test]
-    fn test_empty() {
-        let (book, tree) = CodeBuilder::<&str, i32>::new().finish();
-
-        let mut buffer = BitVec::new();
-        assert!(book.encode(&mut buffer, "hello").is_err());
-
-        let mut decoder = tree.decoder(buffer);
-        assert_eq!(decoder.next(), None);
-    }
-
     quickcheck! {
+        fn efficient_order(ag: u32, at: u32, cg: u32, ct: u32, tg: u32) -> bool {
+            let mut builder = CodeBuilder::new();
+            builder.push("CG", cg);
+            builder.push("AG", ag);
+            builder.push("AT", at);
+            builder.push("CT", ct);
+            builder.push("TG", tg);
+            let (book, _) = builder.finish();
+
+            let len = |symbol| {
+                book.get(symbol).map_or(0, |code| code.len())
+            };
+
+            at >= ct || len("CT") <= len("AT")
+        }
+
         fn encode_decode_bytes(symbols: Vec<u8>) -> bool {
             let mut counts = [0; 256];
             for symbol in &symbols {
