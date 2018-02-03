@@ -267,9 +267,9 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
           W: 'a + Saturating + Ord + Clone
 {
     let weights = weights.into_iter();
-    let (num_symbols, _) = weights.size_hint();
-    let mut heap = BinaryHeap::with_capacity(num_symbols);
-    let mut arena: Vec<Node<K>> = Vec::with_capacity(num_symbols);
+    let (size_hint, _) = weights.size_hint();
+    let mut heap = BinaryHeap::with_capacity(size_hint);
+    let mut arena: Vec<Node<K>> = Vec::with_capacity(size_hint);
 
     for (symbol, weight) in weights {
         heap.push(HeapData {
