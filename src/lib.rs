@@ -267,14 +267,14 @@ impl Error for EncodeError {
 ///
 /// # Stability
 ///
-/// The output is guaranteed to be deterministic and stable across semver
-/// compatible releases if:
+/// The constructed code is guaranteed to be deterministic and stable across
+/// semver compatible releases if:
 ///
 /// * There is a strict order on the symbols `K`.
 /// * No duplicate symbols are added.
 ///
 /// The ordering of symbols will be used to break ties when weights are equal.
-pub struct CodeBuilder<K: Ord, W: Ord> {
+pub struct CodeBuilder<K: Ord + Clone, W: Saturating + Ord> {
     heap: BinaryHeap<HeapData<K, W>>,
     arena: Vec<Node<K>>,
 }
@@ -352,7 +352,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
     }
 }
 
-impl<K: Ord + fmt::Debug, W: Ord + fmt::Debug> fmt::Debug for CodeBuilder<K, W> {
+impl<K: Ord + Clone + fmt::Debug, W: Saturating + Ord + fmt::Debug> fmt::Debug for CodeBuilder<K, W> {
     fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
         fmt.debug_struct("CodeBuilder")
             .field("arena", &self.arena)
