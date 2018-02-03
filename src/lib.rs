@@ -57,7 +57,9 @@
 
 #![doc(html_root_url = "https://docs.rs/huffman-compress/0.1.1")]
 
-#![warn(missing_debug_implementations)]
+#![deny(missing_docs)]
+#![deny(warnings)]
+#![deny(missing_debug_implementations)]
 
 extern crate bit_vec;
 extern crate num_traits;
