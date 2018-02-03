@@ -63,10 +63,8 @@ extern crate bit_vec;
 extern crate num_traits;
 
 use std::borrow::Borrow;
-use std::cmp::Ordering;
-use std::collections::BTreeMap;
-use std::collections::btree_map;
-use std::collections::BinaryHeap;
+use std::cmp::Reverse;
+use std::collections::{BinaryHeap, BTreeMap, btree_map};
 use std::error::Error;
 use std::fmt;
 
@@ -272,8 +270,8 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
     let mut arena: Vec<Node<K>> = Vec::with_capacity(size_hint);
 
     for (symbol, weight) in weights {
-        heap.push(HeapData {
-            weight: weight.clone(),
+        heap.push(HeapData::<W> {
+            weight: Reverse(weight.clone()),
             id: arena.len(),
         });
 
@@ -295,7 +293,7 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
         arena[right.id].parent = Some(id);
 
         heap.push(HeapData {
-            weight: left.weight.saturating_add(right.weight),
+            weight: Reverse(left.weight.0.saturating_add(right.weight.0)),
             id
         });
 
@@ -319,32 +317,18 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
     }
 }
 
-#[derive(Eq, PartialEq)]
+#[derive(Eq, PartialEq, Ord, PartialOrd)]
 struct HeapData<W> {
-    weight: W,
+    weight: Reverse<W>,
     id: usize,
 }
 
 impl<W: Clone> Clone for HeapData<W> {
     fn clone(&self) -> Self {
         HeapData {
-            weight: self.weight.clone(),
+            weight: Reverse(self.weight.0.clone()),
             id: self.id
         }
-    }
-}
-
-impl<W: Ord> Ord for HeapData<W> {
-    fn cmp(&self, other: &Self) -> Ordering {
-        // reverse ordering (smallest first in heap)
-        other.weight.cmp(&self.weight)
-    }
-}
-
-impl<W: PartialOrd> PartialOrd for HeapData<W> {
-    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
-        // reverse ordering (smallest first in heap)
-        other.weight.partial_cmp(&self.weight)
     }
 }
 
