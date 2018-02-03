@@ -63,6 +63,7 @@ extern crate bit_vec;
 extern crate num_traits;
 
 use std::borrow::Borrow;
+use std::cmp;
 use std::cmp::Reverse;
 use std::collections::{BinaryHeap, BTreeMap, btree_map};
 use std::error::Error;
@@ -270,8 +271,9 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
     let mut arena: Vec<Node<K>> = Vec::with_capacity(size_hint);
 
     for (symbol, weight) in weights {
-        heap.push(HeapData::<W> {
+        heap.push(HeapData {
             weight: Reverse(weight.clone()),
+            symbol: symbol.clone(),
             id: arena.len(),
         });
 
@@ -294,6 +296,7 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
 
         heap.push(HeapData {
             weight: Reverse(left.weight.0.saturating_add(right.weight.0)),
+            symbol: cmp::max(left.symbol, right.symbol),
             id
         });
 
@@ -318,15 +321,17 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
 }
 
 #[derive(Eq, PartialEq, Ord, PartialOrd)]
-struct HeapData<W> {
+struct HeapData<K, W> {
     weight: Reverse<W>,
+    symbol: K, // tie breaker
     id: usize,
 }
 
-impl<W: Clone> Clone for HeapData<W> {
+impl<K: Clone, W: Clone> Clone for HeapData<K, W> {
     fn clone(&self) -> Self {
         HeapData {
             weight: Reverse(self.weight.0.clone()),
+            symbol: self.symbol.clone(),
             id: self.id
         }
     }
