@@ -53,7 +53,7 @@ Documentation
 Changelog
 ---------
 
-* Upcoming
+* 0.2.0
   - Allow initialization from iterators without creating a `HashMap`. Thanks
     @mernen.
   - Require `K: Ord` instead of `K: Hash + Eq` for symbols and switch `Book`
