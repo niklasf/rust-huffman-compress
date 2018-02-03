@@ -274,6 +274,7 @@ impl Error for EncodeError {
 /// * No duplicate symbols are added.
 ///
 /// The ordering of symbols will be used to break ties when weights are equal.
+#[derive(Debug)]
 pub struct CodeBuilder<K: Ord + Clone, W: Saturating + Ord> {
     heap: BinaryHeap<HeapData<K, W>>,
     arena: Vec<Node<K>>,
@@ -352,14 +353,6 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
     }
 }
 
-impl<K: Ord + Clone + fmt::Debug, W: Saturating + Ord + fmt::Debug> fmt::Debug for CodeBuilder<K, W> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_struct("CodeBuilder")
-            .field("arena", &self.arena)
-            .finish()
-    }
-}
-
 impl<K: Ord + Clone, W: Saturating + Ord> Default for CodeBuilder<K, W> {
     fn default() -> CodeBuilder<K, W> {
         CodeBuilder::new()
@@ -404,7 +397,7 @@ impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> Extend<(&'a K, &'a W)> for
     }
 }
 
-#[derive(Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Eq, PartialEq, Ord, PartialOrd, Debug)]
 struct HeapData<K, W> {
     weight: Reverse<W>,
     symbol: K, // tie breaker
