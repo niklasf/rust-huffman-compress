@@ -274,7 +274,7 @@ impl Error for EncodeError {
 /// * No duplicate symbols are added.
 ///
 /// The ordering of symbols will be used to break ties when weights are equal.
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct CodeBuilder<K: Ord + Clone, W: Saturating + Ord> {
     heap: BinaryHeap<HeapData<K, W>>,
     arena: Vec<Node<K>>,
@@ -402,6 +402,16 @@ struct HeapData<K, W> {
     weight: Reverse<W>,
     symbol: K, // tie breaker
     id: usize,
+}
+
+impl<K: Clone, W: Clone> Clone for HeapData<K, W> {
+    fn clone(&self) -> HeapData<K, W> {
+        HeapData {
+            weight: Reverse(self.weight.0.clone()),
+            symbol: self.symbol.clone(),
+            id: self.id,
+        }
+    }
 }
 
 /// Shortcut for
