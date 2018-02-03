@@ -51,6 +51,9 @@ Documentation
 Changelog
 ---------
 
+* 0.3.0
+  - Introduce `CodeBuilder`.
+  - Changes tie breaking order.
 * 0.2.0
   - Allow initialization from iterators without creating a `HashMap`. Thanks
     @mernen.
