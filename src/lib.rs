@@ -62,6 +62,10 @@
 #![deny(warnings)]
 #![deny(missing_debug_implementations)]
 
+#[cfg(test)]
+#[macro_use]
+extern crate quickcheck;
+
 extern crate bit_vec;
 extern crate num_traits;
 
@@ -501,5 +505,27 @@ mod tests {
 
         let mut decoder = tree.decoder(buffer);
         assert_eq!(decoder.next(), None);
+    }
+
+    quickcheck! {
+        fn encode_decode_bytes(symbols: Vec<u8>) -> bool {
+            let mut counts = [0; 256];
+            for symbol in &symbols {
+                counts[usize::from(*symbol)] += 1;
+            }
+
+            let (book, tree) = counts.iter()
+                .enumerate()
+                .map(|(k, v)| (k as u8, *v))
+                .collect::<CodeBuilder<_, _>>()
+                .finish();
+
+            let mut buffer = BitVec::new();
+            for symbol in &symbols {
+                book.encode(&mut buffer, symbol).unwrap();
+            }
+
+            tree.decoder(&buffer).eq(symbols)
+        }
     }
 }
