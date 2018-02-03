@@ -288,11 +288,20 @@ impl<K: Ord + Clone, W: Saturating + Ord + Clone> CodeBuilder<K, W> {
     /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
     /// for encoding and decoding.
     pub fn finish(mut self) -> (Book<K>, Tree<K>) {
-        while self.heap.len() >= 2 {
-            let id = self.arena.len();
+        let mut book = Book::new();
 
-            let left = self.heap.pop().unwrap();
-            let right = self.heap.pop().unwrap();
+        let root = loop {
+            let left = match self.heap.pop() {
+                Some(left) => left,
+                None => return (book, Tree { root: 0, arena: self.arena }),
+            };
+
+            let right = match self.heap.pop() {
+                Some(right) => right,
+                None => break left,
+            };
+
+            let id = self.arena.len();
 
             self.arena[left.id].parent = Some(id);
             self.arena[right.id].parent = Some(id);
@@ -310,17 +319,10 @@ impl<K: Ord + Clone, W: Saturating + Ord + Clone> CodeBuilder<K, W> {
                     right: right.id
                 }
             });
-        }
+        };
 
-        let mut book = Book::new();
-
-        match self.heap.pop() {
-            Some(HeapData { id: root, .. }) => {
-                book.build(&self.arena, &self.arena[root], BitVec::new());
-                (book, Tree { root, arena: self.arena })
-            },
-            None => (book, Tree { root: 0, arena: self.arena })
-        }
+        book.build(&self.arena, &self.arena[root.id], BitVec::new());
+        (book, Tree { root: root.id, arena: self.arena })
     }
 }
 
