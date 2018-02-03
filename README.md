@@ -53,6 +53,14 @@ Documentation
 Changelog
 ---------
 
+* Upcoming
+  - Allow initialization from iterators without creating a `HashMap`. Thanks
+    @mernen.
+  - Require `K: Ord` instead of `K: Hash + Eq` for symbols and switch `Book`
+    internals from `HashMap` to `BTreeMap`.
+  - Specify stability guarantees.
+* 0.1.1
+  - Expose more methods on `Book`.
 * 0.1.0
   - Initial release.
 
