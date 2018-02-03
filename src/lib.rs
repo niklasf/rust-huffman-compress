@@ -260,6 +260,16 @@ impl Error for EncodeError {
 
 /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
 /// from a map of symbols and their weights.
+///
+/// # Implementation details
+///
+/// The output is guaranteed to be deterministic and stable across semver
+/// compatible releases if:
+///
+/// * There is a strict order on the symbols `K`
+/// * `weights` yields no duplicate symbols
+///
+/// The ordering of symbols will be used to break ties when weights are equal.
 pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
     where I: IntoIterator<Item = (&'a K, &'a W)>,
           K: 'a + Ord + Clone,
