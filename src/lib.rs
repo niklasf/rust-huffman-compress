@@ -64,18 +64,17 @@ extern crate num_traits;
 
 use std::borrow::Borrow;
 use std::cmp::Ordering;
-use std::collections::HashMap;
-use std::collections::hash_map;
+use std::collections::BTreeMap;
+use std::collections::btree_map;
 use std::collections::BinaryHeap;
 use std::error::Error;
-use std::hash::Hash;
 use std::fmt;
 
 use bit_vec::BitVec;
 
 pub use num_traits::ops::saturating::Saturating;
 
-/// A binary tree used for decoding.
+/// A trie used for decoding.
 #[derive(Debug, Clone)]
 pub struct Tree<K> {
     root: usize,
@@ -154,32 +153,24 @@ impl<'a, K: Clone, I: IntoIterator<Item=bool>> Iterator for Decoder<'a, K, I> {
 }
 
 /// A codebook used for encoding.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Book<K> {
-    book: HashMap<K, BitVec>,
+    book: BTreeMap<K, BitVec>,
 }
 
-impl<K: Eq + Hash + fmt::Debug> fmt::Debug for Book<K> {
-    fn fmt(&self, fmt: &mut fmt::Formatter) -> fmt::Result {
-        fmt.debug_struct("Book")
-            .field("book", &self.book)
-            .finish()
-    }
-}
-
-impl<K: Eq + Hash + Clone> Book<K> {
-    /// Returns the underlying hash map.
-    pub fn into_inner(self) -> HashMap<K, BitVec> {
+impl<K: Ord + Clone> Book<K> {
+    /// Returns the underlying B-Tree.
+    pub fn into_inner(self) -> BTreeMap<K, BitVec> {
         self.book
     }
 
-    /// An iterator visiting all symbols in arbitrary order.
-    pub fn symbols(&self) -> hash_map::Keys<K, BitVec> {
+    /// An iterator over all symbols in sorted order.
+    pub fn symbols(&self) -> btree_map::Keys<K, BitVec> {
         self.book.keys()
     }
 
-    /// An iterator visiting all symbol and code word pairs in arbitrary order.
-    pub fn iter(&self) -> hash_map::Iter<K, BitVec> {
+    /// An iterator over all symbol and code word pairs, sorted by symbol.
+    pub fn iter(&self) -> btree_map::Iter<K, BitVec> {
         self.book.iter()
     }
 
@@ -196,7 +187,7 @@ impl<K: Eq + Hash + Clone> Book<K> {
     /// Returns the code word for a given symbol.
     pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&BitVec>
         where K: Borrow<Q>,
-              Q: Hash + Eq
+              Q: Ord
     {
         self.book.get(k)
     }
@@ -204,7 +195,7 @@ impl<K: Eq + Hash + Clone> Book<K> {
     /// Returns true if the book contains the specified symbol.
     pub fn contains_symbol<Q: ?Sized>(&self, k: &Q) -> bool
         where K: Borrow<Q>,
-              Q: Hash + Eq
+              Q: Ord
     {
         self.book.contains_key(k)
     }
@@ -218,7 +209,7 @@ impl<K: Eq + Hash + Clone> Book<K> {
     /// [`EncodeError`]: struct.EncodeError.html
     pub fn encode<Q: ?Sized>(&self, buffer: &mut BitVec, k: &Q) -> Result<(), EncodeError>
         where K: Borrow<Q>,
-              Q: Hash + Eq
+              Q: Ord
     {
         match self.book.get(k) {
             Some(code) => buffer.extend(code),
@@ -228,9 +219,9 @@ impl<K: Eq + Hash + Clone> Book<K> {
         Ok(())
     }
 
-    fn with_capacity(num_symbols: usize) -> Book<K> {
+    fn new() -> Book<K> {
         Book {
-            book: HashMap::with_capacity(num_symbols),
+            book: BTreeMap::new(),
         }
     }
 
@@ -272,7 +263,7 @@ impl Error for EncodeError {
 /// from a map of symbols and their weights.
 pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
     where I: IntoIterator<Item = (&'a K, &'a W)>,
-          K: 'a + Hash + Eq + Clone,
+          K: 'a + Ord + Clone,
           W: 'a + Saturating + Ord + Clone
 {
     let weights = weights.into_iter();
@@ -317,7 +308,7 @@ pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
         });
     }
 
-    let mut book = Book::with_capacity(num_symbols);
+    let mut book = Book::new();
 
     match heap.pop() {
         Some(HeapData { id: root, .. }) => {
@@ -360,6 +351,7 @@ impl<W: PartialOrd> PartialOrd for HeapData<W> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::collections::HashMap;
 
     #[test]
     fn test_uniform() {
