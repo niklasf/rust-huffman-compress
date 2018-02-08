@@ -15,7 +15,7 @@ harness = false
 
 [dependencies]
 bit-vec = "0.4"
-num-traits = "0.1"
+num-traits = "0.2"
 
 [dev-dependencies]
 bencher = "0.1"
