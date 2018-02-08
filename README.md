@@ -51,6 +51,8 @@ Documentation
 Changelog
 ---------
 
+* 0.3.1
+  - Update num-traits to 0.2 (semver compatible).
 * 0.3.0
   - Introduce `CodeBuilder`.
   - Changes tie breaking order.
