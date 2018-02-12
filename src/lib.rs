@@ -293,7 +293,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
     pub fn with_capacity(capacity: usize) -> CodeBuilder<K, W> {
         CodeBuilder {
             heap: BinaryHeap::with_capacity(capacity),
-            arena: Vec::with_capacity(capacity),
+            arena: Vec::with_capacity(2 * capacity),
         }
     }
 
