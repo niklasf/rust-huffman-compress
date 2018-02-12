@@ -56,7 +56,7 @@
 //! # }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/huffman-compress/0.3.1")]
+#![doc(html_root_url = "https://docs.rs/huffman-compress/0.3.2")]
 
 #![deny(missing_docs)]
 #![deny(warnings)]
