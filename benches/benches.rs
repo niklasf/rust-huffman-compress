@@ -26,8 +26,7 @@ fn bench_encode_decode(b: &mut Bencher) {
             book.encode(&mut buffer, symbol).unwrap();
         }
 
-        let decoded: Vec<&str> = tree.decoder(&buffer).collect();
-        assert_eq!(decoded, example);
+        example.iter().zip(tree.decoder(&buffer)).all(|(l, r)| l == &r);
     });
 }
 
