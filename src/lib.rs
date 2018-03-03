@@ -79,7 +79,7 @@ use std::iter::FromIterator;
 
 use bit_vec::BitVec;
 
-pub use num_traits::ops::saturating::Saturating;
+use num_traits::ops::saturating::Saturating;
 
 /// A trie used for decoding.
 #[derive(Debug, Clone)]
