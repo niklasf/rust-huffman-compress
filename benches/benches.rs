@@ -4,7 +4,7 @@ extern crate bit_vec;
 extern crate huffman_compress;
 
 use std::collections::HashMap;
-use bencher::{Bencher, black_box};
+use bencher::{black_box, Bencher};
 use bit_vec::BitVec;
 use huffman_compress::codebook;
 

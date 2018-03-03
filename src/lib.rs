@@ -62,17 +62,17 @@
 #![deny(warnings)]
 #![deny(missing_debug_implementations)]
 
+extern crate bit_vec;
+extern crate num_traits;
+
 #[cfg(test)]
 #[macro_use]
 extern crate quickcheck;
 
-extern crate bit_vec;
-extern crate num_traits;
-
 use std::borrow::Borrow;
 use std::cmp;
 use std::cmp::Reverse;
-use std::collections::{BinaryHeap, BTreeMap, btree_map};
+use std::collections::{btree_map, BTreeMap, BinaryHeap};
 use std::error::Error;
 use std::fmt;
 use std::iter::FromIterator;
@@ -91,7 +91,7 @@ pub struct Tree<K> {
 #[derive(Debug, Clone)]
 struct Node<K> {
     parent: Option<usize>,
-    data: NodeData<K>
+    data: NodeData<K>,
 }
 
 #[derive(Debug, Clone)]
@@ -114,7 +114,8 @@ impl<K: Clone> Tree<K> {
     /// If the source is exhausted no further symbols will be decoded
     /// (not even incomplete ones).
     pub fn decoder<I>(&self, iterable: I) -> Decoder<K, I>
-        where I: IntoIterator<Item=bool>
+    where
+        I: IntoIterator<Item = bool>,
     {
         Decoder {
             tree: self,
@@ -125,12 +126,12 @@ impl<K: Clone> Tree<K> {
 
 /// Decodes symbols from a source of bits.
 #[derive(Debug)]
-pub struct Decoder<'a, K: 'a, I: IntoIterator<Item=bool>> {
+pub struct Decoder<'a, K: 'a, I: IntoIterator<Item = bool>> {
     tree: &'a Tree<K>,
     iter: I::IntoIter,
 }
 
-impl<'a, K: Clone, I: IntoIterator<Item=bool>> Iterator for Decoder<'a, K, I> {
+impl<'a, K: Clone, I: IntoIterator<Item = bool>> Iterator for Decoder<'a, K, I> {
     type Item = K;
 
     fn next(&mut self) -> Option<K> {
@@ -188,16 +189,18 @@ impl<K: Ord + Clone> Book<K> {
 
     /// Returns the code word for a given symbol.
     pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&BitVec>
-        where K: Borrow<Q>,
-              Q: Ord
+    where
+        K: Borrow<Q>,
+        Q: Ord,
     {
         self.book.get(k)
     }
 
     /// Returns true if the book contains the specified symbol.
     pub fn contains_symbol<Q: ?Sized>(&self, k: &Q) -> bool
-        where K: Borrow<Q>,
-              Q: Ord
+    where
+        K: Borrow<Q>,
+        Q: Ord,
     {
         self.book.contains_key(k)
     }
@@ -210,12 +213,13 @@ impl<K: Ord + Clone> Book<K> {
     ///
     /// [`EncodeError`]: struct.EncodeError.html
     pub fn encode<Q: ?Sized>(&self, buffer: &mut BitVec, k: &Q) -> Result<(), EncodeError>
-        where K: Borrow<Q>,
-              Q: Ord
+    where
+        K: Borrow<Q>,
+        Q: Ord,
     {
         match self.book.get(k) {
             Some(code) => buffer.extend(code),
-            None => return Err(EncodeError { }),
+            None => return Err(EncodeError {}),
         }
 
         Ok(())
@@ -231,8 +235,8 @@ impl<K: Ord + Clone> Book<K> {
         match node.data {
             NodeData::Leaf { ref symbol } => {
                 self.book.insert(symbol.clone(), word);
-            },
-            NodeData::Branch  { left, right } => {
+            }
+            NodeData::Branch { left, right } => {
                 let mut left_word = word.clone();
                 left_word.push(true);
                 self.build(arena, &arena[left], left_word);
@@ -240,7 +244,7 @@ impl<K: Ord + Clone> Book<K> {
                 let mut right_word = word;
                 right_word.push(false);
                 self.build(arena, &arena[right], right_word);
-            },
+            }
         }
     }
 }
@@ -335,15 +339,15 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
             self.heap.push(HeapData {
                 weight: Reverse(left.weight.0.saturating_add(right.weight.0)),
                 symbol: cmp::min(left.symbol, right.symbol),
-                id
+                id,
             });
 
             self.arena.push(Node {
                 parent: None,
                 data: NodeData::Branch {
                     left: left.id,
-                    right: right.id
-                }
+                    right: right.id,
+                },
             });
         };
 
@@ -360,7 +364,8 @@ impl<K: Ord + Clone, W: Saturating + Ord> Default for CodeBuilder<K, W> {
 
 impl<K: Ord + Clone, W: Saturating + Ord> FromIterator<(K, W)> for CodeBuilder<K, W> {
     fn from_iter<T>(weights: T) -> CodeBuilder<K, W>
-        where T: IntoIterator<Item = (K, W)>
+    where
+        T: IntoIterator<Item = (K, W)>,
     {
         let iter = weights.into_iter();
         let (size_hint, _) = iter.size_hint();
@@ -372,7 +377,8 @@ impl<K: Ord + Clone, W: Saturating + Ord> FromIterator<(K, W)> for CodeBuilder<K
 
 impl<K: Ord + Clone, W: Saturating + Ord> Extend<(K, W)> for CodeBuilder<K, W> {
     fn extend<T>(&mut self, weights: T)
-        where T: IntoIterator<Item = (K, W)>
+    where
+        T: IntoIterator<Item = (K, W)>,
     {
         for (symbol, weight) in weights {
             self.push(symbol, weight);
@@ -382,7 +388,8 @@ impl<K: Ord + Clone, W: Saturating + Ord> Extend<(K, W)> for CodeBuilder<K, W> {
 
 impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(&'a K, &'a W)> for CodeBuilder<K, W> {
     fn from_iter<T>(weights: T) -> CodeBuilder<K, W>
-        where T: IntoIterator<Item = (&'a K, &'a W)>
+    where
+        T: IntoIterator<Item = (&'a K, &'a W)>,
     {
         CodeBuilder::from_iter(weights.into_iter().map(|(k, v)| (k.clone(), v.clone())))
     }
@@ -390,7 +397,8 @@ impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(&'a K, &'a W
 
 impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> Extend<(&'a K, &'a W)> for CodeBuilder<K, W> {
     fn extend<T>(&mut self, weights: T)
-        where T: IntoIterator<Item = (&'a K, &'a W)>
+    where
+        T: IntoIterator<Item = (&'a K, &'a W)>,
     {
         self.extend(weights.into_iter().map(|(k, v)| (k.clone(), v.clone())));
     }
@@ -416,9 +424,10 @@ impl<K: Clone, W: Clone> Clone for HeapData<K, W> {
 /// Shortcut for
 /// [`CodeBuilder::from_iter(weights).finish()`](struct.CodeBuilder.html).
 pub fn codebook<'a, I, K, W>(weights: I) -> (Book<K>, Tree<K>)
-    where I: IntoIterator<Item = (&'a K, &'a W)>,
-          K: 'a + Ord + Clone,
-          W: 'a + Saturating + Ord + Clone
+where
+    I: IntoIterator<Item = (&'a K, &'a W)>,
+    K: 'a + Ord + Clone,
+    W: 'a + Saturating + Ord + Clone,
 {
     CodeBuilder::from_iter(weights).finish()
 }
