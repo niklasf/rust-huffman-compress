@@ -46,7 +46,7 @@
 //! }
 //!
 //! // Decode the symbols using the tree.
-//! let decoded: Vec<&str> = tree.decoder(&buffer).collect();
+//! let decoded: Vec<&str> = tree.decoder(&buffer, example.len()).collect();
 //! assert_eq!(decoded, example);
 //! #     Ok(())
 //! # }
@@ -75,7 +75,7 @@ use std::cmp::Reverse;
 use std::collections::{btree_map, BTreeMap, BinaryHeap};
 use std::error::Error;
 use std::fmt;
-use std::iter::FromIterator;
+use std::iter::{FromIterator, Take};
 
 use bit_vec::BitVec;
 
@@ -103,35 +103,54 @@ enum NodeData<K> {
 impl<K: Clone> Tree<K> {
     /// An iterator decoding symbols from a source of bits.
     ///
+    /// In pathologic cases the iterator is unbounded: If there is only one
+    /// symbol the iterator will yield that symbol **infinitely** often without
+    /// consuming any bits.
+    ///
     /// If there are no symbols the decoded sequence is empty without consuming
     /// any bits.
     ///
-    /// If there is only one symbol the iterator will yield that symbol
-    /// **infinitely** often without consuming any bits.
-    ///
-    /// # Errors
-    ///
     /// If the source is exhausted no further symbols will be decoded
     /// (not even incomplete ones).
-    pub fn decoder<I>(&self, iterable: I) -> Decoder<K, I>
+    pub fn unbounded_decoder<I>(&self, iterable: I) -> UnboundedDecoder<K, I>
     where
         I: IntoIterator<Item = bool>,
     {
-        Decoder {
+        UnboundedDecoder {
             tree: self,
             iter: iterable.into_iter(),
         }
     }
+
+    /// An iterator decoding up to `num_symbols` symbols from a source of bits.
+    ///
+    /// Also see [`unbounded_decoder()`](#method.unbounded_decoder).
+    ///
+    /// If there are no symbols the decoded sequence is empty without consuming
+    /// any bits.
+    ///
+    /// If the source is exhausted no further symbols will be decoded
+    /// (not even incomplete ones).
+    pub fn decoder<I>(&self, iterable: I, num_symbols: usize) -> Decoder<K, I>
+    where
+        I: IntoIterator<Item = bool>,
+    {
+        self.unbounded_decoder(iterable).take(num_symbols)
+    }
 }
+
+/// A bounded [decoder](struct.UnboundedDecoder.html), decoding symbols from
+/// a source of bits.
+pub type Decoder<'a, K, I> = Take<UnboundedDecoder<'a, K, I>>;
 
 /// Decodes symbols from a source of bits.
 #[derive(Debug)]
-pub struct Decoder<'a, K: 'a, I: IntoIterator<Item = bool>> {
+pub struct UnboundedDecoder<'a, K: 'a, I: IntoIterator<Item = bool>> {
     tree: &'a Tree<K>,
     iter: I::IntoIter,
 }
 
-impl<'a, K: Clone, I: IntoIterator<Item = bool>> Iterator for Decoder<'a, K, I> {
+impl<'a, K: Clone, I: IntoIterator<Item = bool>> Iterator for UnboundedDecoder<'a, K, I> {
     type Item = K;
 
     fn next(&mut self) -> Option<K> {
@@ -454,7 +473,7 @@ mod tests {
         book.encode(&mut buffer, &4).unwrap();
         book.encode(&mut buffer, &5).unwrap();
 
-        let mut decoder = tree.decoder(buffer);
+        let mut decoder = tree.unbounded_decoder(buffer);
         assert_eq!(decoder.next(), Some(1));
         assert_eq!(decoder.next(), Some(2));
         assert_eq!(decoder.next(), Some(3));
@@ -479,7 +498,7 @@ mod tests {
         book.encode(&mut buffer, &'c').unwrap();
         book.encode(&mut buffer, &'d').unwrap();
 
-        let mut decoder = tree.decoder(buffer);
+        let mut decoder = tree.unbounded_decoder(buffer);
         assert_eq!(decoder.next(), Some('a'));
         assert_eq!(decoder.next(), Some('b'));
         assert_eq!(decoder.next(), Some('c'));
@@ -494,7 +513,7 @@ mod tests {
         let mut buffer = BitVec::new();
         assert!(book.encode(&mut buffer, "hello").is_err());
 
-        let mut decoder = tree.decoder(buffer);
+        let mut decoder = tree.unbounded_decoder(buffer);
         assert_eq!(decoder.next(), None);
     }
 
@@ -507,7 +526,7 @@ mod tests {
         let mut buffer = BitVec::new();
         book.encode(&mut buffer, "hello").unwrap();
 
-        let mut decoder = tree.decoder(buffer);
+        let mut decoder = tree.unbounded_decoder(buffer);
         assert_eq!(decoder.next(), Some("hello"));
         assert_eq!(decoder.next(), Some("hello")); // repeats
     }
@@ -546,7 +565,7 @@ mod tests {
                 book.encode(&mut buffer, symbol).unwrap();
             }
 
-            tree.decoder(&buffer).eq(symbols)
+            tree.unbounded_decoder(&buffer).eq(symbols)
         }
     }
 }
