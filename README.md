@@ -51,6 +51,11 @@ Documentation
 Changelog
 ---------
 
+* 0.4.0
+  - Renamed `Tree::decoder()` to `Tree::unbounded_decoder()` to avoid
+    surprises. A new `Tree::decoder()` takes the maximum number of symbols to
+    decode.
+  - No longer reexporting `Saturating` from num-traits.
 * 0.3.2
   - Preallocate arena space for Huffman tree.
 * 0.3.1
