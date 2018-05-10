@@ -51,6 +51,8 @@ Documentation
 Changelog
 ---------
 
+* 0.5.0
+  - Update to `bit-vec` 0.5.
 * 0.4.0
   - Renamed `Tree::decoder()` to `Tree::unbounded_decoder()` to avoid
     surprises. A new `Tree::decoder()` takes the maximum number of symbols to
