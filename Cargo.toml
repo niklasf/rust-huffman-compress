@@ -14,7 +14,7 @@ name = "benches"
 harness = false
 
 [dependencies]
-bit-vec = "0.4"
+bit-vec = "0.5"
 num-traits = "0.2"
 
 [dev-dependencies]
