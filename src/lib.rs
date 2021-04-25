@@ -59,7 +59,6 @@
 #![doc(html_root_url = "https://docs.rs/huffman-compress/0.5.0")]
 
 #![deny(missing_docs)]
-#![deny(warnings)]
 #![deny(missing_debug_implementations)]
 
 extern crate bit_vec;
@@ -274,7 +273,7 @@ pub struct EncodeError;
 
 impl fmt::Display for EncodeError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        self.description().fmt(f)
+        "encode error: tried to encode an unknown symbol".fmt(f)
     }
 }
 
