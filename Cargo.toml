@@ -19,7 +19,7 @@ num-traits = "0.2"
 
 [dev-dependencies]
 bencher = "0.1"
-quickcheck = "0.8"
+quickcheck = "1"
 
 [badges]
 travis-ci = { repository = "niklasf/rust-huffman-compress", branch = "master" }
