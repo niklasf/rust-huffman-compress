@@ -544,7 +544,8 @@ mod tests {
                 book.get(symbol).map_or(0, |code| code.len())
             };
 
-            at >= ct || len("CT") <= len("AT")
+            at >= ct || len("CT") <= len("AT") ||
+            ag.saturating_add(at).saturating_add(cg).saturating_add(ct).saturating_add(tg) >= u32::MAX
         }
 
         fn encode_decode_bytes(symbols: Vec<u8>) -> bool {
