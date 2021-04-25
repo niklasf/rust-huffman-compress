@@ -3,10 +3,10 @@ extern crate bencher;
 extern crate bit_vec;
 extern crate huffman_compress;
 
-use std::collections::HashMap;
 use bencher::{black_box, Bencher};
 use bit_vec::BitVec;
 use huffman_compress::codebook;
+use std::collections::HashMap;
 
 fn bench_encode_decode(b: &mut Bencher) {
     let mut weights = HashMap::new();
@@ -26,11 +26,13 @@ fn bench_encode_decode(b: &mut Bencher) {
             book.encode(&mut buffer, symbol).unwrap();
         }
 
-        assert!(example.iter().zip(tree.unbounded_decoder(&buffer)).all(|(l, r)| l == &r));
+        assert!(example
+            .iter()
+            .zip(tree.unbounded_decoder(&buffer))
+            .all(|(l, r)| l == &r));
     });
 }
 
-benchmark_group!(benches,
-    bench_encode_decode);
+benchmark_group!(benches, bench_encode_decode);
 
 benchmark_main!(benches);

@@ -57,7 +57,6 @@
 //! ```
 
 #![doc(html_root_url = "https://docs.rs/huffman-compress/0.5.0")]
-
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 
@@ -341,7 +340,15 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
         let root = loop {
             let left = match self.heap.pop() {
                 Some(left) => left,
-                None => return (book, Tree { root: 0, arena: self.arena }),
+                None => {
+                    return (
+                        book,
+                        Tree {
+                            root: 0,
+                            arena: self.arena,
+                        },
+                    )
+                }
             };
 
             let right = match self.heap.pop() {
@@ -370,7 +377,13 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
         };
 
         book.build(&self.arena, &self.arena[root.id], BitVec::new());
-        (book, Tree { root: root.id, arena: self.arena })
+        (
+            book,
+            Tree {
+                root: root.id,
+                arena: self.arena,
+            },
+        )
     }
 }
 
@@ -404,7 +417,9 @@ impl<K: Ord + Clone, W: Saturating + Ord> Extend<(K, W)> for CodeBuilder<K, W> {
     }
 }
 
-impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(&'a K, &'a W)> for CodeBuilder<K, W> {
+impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(&'a K, &'a W)>
+    for CodeBuilder<K, W>
+{
     fn from_iter<T>(weights: T) -> CodeBuilder<K, W>
     where
         T: IntoIterator<Item = (&'a K, &'a W)>,
@@ -483,12 +498,7 @@ mod tests {
 
     #[test]
     fn test_uniform_from_static() {
-        const WEIGHTS: &[(&char, &usize)] = &[
-            (&'a', &1),
-            (&'b', &1),
-            (&'c', &1),
-            (&'d', &1),
-        ];
+        const WEIGHTS: &[(&char, &usize)] = &[(&'a', &1), (&'b', &1), (&'c', &1), (&'d', &1)];
         let (book, tree) = codebook(WEIGHTS.iter().cloned());
 
         let mut buffer = BitVec::new();
