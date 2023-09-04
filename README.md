@@ -9,6 +9,16 @@ given a probability distribution over arbitrary symbols.
 [![docs.rs](https://docs.rs/huffman-compress/badge.svg)](https://docs.rs/huffman-compress)
 [![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
 
+Feature
+-------
+
+If you want serde support, include the feature like this:
+
+```
+[dependencies]
+bit-vec = { version = "0.6", features = ["serde"] }
+```
+
 Examples
 --------
 
