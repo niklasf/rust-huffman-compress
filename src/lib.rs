@@ -80,7 +80,7 @@ use bit_vec::BitVec;
 
 use num_traits::ops::saturating::Saturating;
 
-/// A trie used for decoding.
+/// A tree used for decoding.
 #[derive(Debug, Clone)]
 pub struct Tree<K> {
     root: usize,
