@@ -8,6 +8,7 @@ readme = "README.md"
 repository = "https://github.com/niklasf/rust-huffman-compress"
 categories = ["compression", "encoding", "algorithms"]
 description = "Huffman compression given a probability distribution over arbitrary symbols"
+edition = "2021"
 
 [[bench]]
 name = "benches"
