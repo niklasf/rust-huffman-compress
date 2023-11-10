@@ -1,14 +1,9 @@
-#[macro_use]
-extern crate bencher;
-extern crate bit_vec;
-extern crate huffman_compress;
-
-use bencher::{black_box, Bencher};
 use bit_vec::BitVec;
+use criterion::{black_box, criterion_group, criterion_main, Criterion};
 use huffman_compress::codebook;
 use std::collections::HashMap;
 
-fn bench_encode_decode(b: &mut Bencher) {
+fn bench_encode_decode(c: &mut Criterion) {
     let mut weights = HashMap::new();
     weights.insert("CG", 293);
     weights.insert("AG", 34);
@@ -20,19 +15,21 @@ fn bench_encode_decode(b: &mut Bencher) {
 
     let example = black_box(vec!["AT", "CG", "AT", "TG", "AG", "CT", "CT", "AG", "CG"]);
 
-    b.iter(|| {
-        let mut buffer = BitVec::new();
-        for symbol in &example {
-            book.encode(&mut buffer, symbol).unwrap();
-        }
+    c.bench_function("encode-decode", |b| {
+        b.iter(|| {
+            let mut buffer = BitVec::new();
+            for symbol in &example {
+                book.encode(&mut buffer, symbol).unwrap();
+            }
 
-        assert!(example
-            .iter()
-            .zip(tree.unbounded_decoder(&buffer))
-            .all(|(l, r)| l == &r));
+            assert!(example
+                .iter()
+                .zip(tree.unbounded_decoder(&buffer))
+                .all(|(l, r)| l == &r));
+        })
     });
 }
 
-benchmark_group!(benches, bench_encode_decode);
+criterion_group!(benches, bench_encode_decode);
 
-benchmark_main!(benches);
+criterion_main!(benches);

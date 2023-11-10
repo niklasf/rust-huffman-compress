@@ -19,7 +19,7 @@ bit-vec = "0.6"
 num-traits = "0.2"
 
 [dev-dependencies]
-bencher = "0.1"
+criterion = "0.5"
 quickcheck = "1"
 
 [badges]
