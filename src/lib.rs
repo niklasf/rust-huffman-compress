@@ -147,19 +147,16 @@ impl<'a, K: Clone, I: IntoIterator<Item = bool>> Iterator for UnboundedDecoder<'
     type Item = K;
 
     fn next(&mut self) -> Option<K> {
-        let mut node = match self.tree.arena.get(self.tree.root) {
-            Some(root) => root,
-            None => return None, // empty tree
-        };
+        let mut node = self.tree.arena.get(self.tree.root)?;
 
         loop {
             match node.data {
                 NodeData::Leaf { ref symbol } => return Some(symbol.clone()),
                 NodeData::Branch { left, right } => {
-                    node = match self.iter.next() {
-                        Some(true) => &self.tree.arena[left],
-                        Some(false) => &self.tree.arena[right],
-                        None => return None,
+                    node = if self.iter.next()? {
+                        &self.tree.arena[left]
+                    } else {
+                        &self.tree.arena[right]
                     };
                 }
             }
