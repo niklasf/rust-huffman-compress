@@ -17,7 +17,7 @@
 //!
 //! # use std::error::Error;
 //! #
-//! # fn try_main() -> Result<(), Box<Error>> {
+//! # fn try_main() -> Result<(), Box<dyn Error>> {
 //! use std::iter::FromIterator;
 //! use std::collections::HashMap;
 //! use bit_vec::BitVec;
@@ -60,13 +60,6 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
-
-extern crate bit_vec;
-extern crate num_traits;
-
-#[cfg(test)]
-#[macro_use]
-extern crate quickcheck;
 
 use std::borrow::Borrow;
 use std::cmp;
@@ -469,6 +462,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use quickcheck::quickcheck;
     use std::collections::HashMap;
 
     #[test]
