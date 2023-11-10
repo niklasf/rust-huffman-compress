@@ -61,6 +61,7 @@
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
 #![warn(clippy::pedantic)]
+#![allow(clippy::manual_let_else)]
 
 use std::borrow::Borrow;
 use std::cmp;
@@ -229,12 +230,7 @@ impl<K: Ord + Clone> Book<K> {
         K: Borrow<Q>,
         Q: Ord,
     {
-        match self.book.get(k) {
-            Some(code) => buffer.extend(code),
-            None => return Err(EncodeError {}),
-        }
-
-        Ok(())
+        self.book.get(k).map(|code| buffer.extend(code)).ok_or(EncodeError {})
     }
 
     fn new() -> Book<K> {
@@ -422,7 +418,7 @@ impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(&'a K, &'a W
     where
         T: IntoIterator<Item = (&'a K, &'a W)>,
     {
-        CodeBuilder::from_iter(weights.into_iter().map(|(k, v)| (k.clone(), v.clone())))
+        weights.into_iter().map(|(k, v)| (k.clone(), v.clone())).collect()
     }
 }
 
@@ -554,7 +550,7 @@ mod tests {
             };
 
             at >= ct || len("CT") <= len("AT") ||
-            ag.saturating_add(at).saturating_add(cg).saturating_add(ct).saturating_add(tg) >= u32::MAX
+            ag.saturating_add(at).saturating_add(cg).saturating_add(ct).saturating_add(tg) == u32::MAX
         }
 
         fn encode_decode_bytes(symbols: Vec<u8>) -> bool {
