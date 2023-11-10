@@ -60,6 +60,7 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
+#![warn(clippy::pedantic)]
 
 use std::borrow::Borrow;
 use std::cmp;
@@ -174,6 +175,7 @@ pub struct Book<K> {
 
 impl<K: Ord + Clone> Book<K> {
     /// Returns the underlying B-Tree.
+    #[must_use]
     pub fn into_inner(self) -> BTreeMap<K, BitVec> {
         self.book
     }
@@ -189,11 +191,13 @@ impl<K: Ord + Clone> Book<K> {
     }
 
     /// Returns the number of symbols in the book.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.book.len()
     }
 
     /// Returns true if the map has no symbols.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.book.is_empty()
     }
@@ -296,6 +300,7 @@ pub struct CodeBuilder<K: Ord + Clone, W: Saturating + Ord> {
 
 impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
     /// Creates a new, empty `CodeBuilder<K, W>`.
+    #[must_use]
     pub fn new() -> CodeBuilder<K, W> {
         CodeBuilder {
             heap: BinaryHeap::new(),
@@ -305,6 +310,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
 
     /// Creates a new, empty `CodeBuilder<K, W>` and preallocates space
     /// for `capacity` symbols.
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> CodeBuilder<K, W> {
         CodeBuilder {
             heap: BinaryHeap::with_capacity(capacity),
@@ -328,6 +334,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
 
     /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
     /// for encoding and decoding.
+    #[must_use]
     pub fn finish(mut self) -> (Book<K>, Tree<K>) {
         let mut book = Book::new();
 
@@ -494,7 +501,7 @@ mod tests {
     #[test]
     fn test_uniform_from_static() {
         const WEIGHTS: &[(&char, &usize)] = &[(&'a', &1), (&'b', &1), (&'c', &1), (&'d', &1)];
-        let (book, tree) = codebook(WEIGHTS.iter().cloned());
+        let (book, tree) = codebook(WEIGHTS.iter().copied());
 
         let mut buffer = BitVec::new();
         book.encode(&mut buffer, &'a').unwrap();
@@ -546,7 +553,7 @@ mod tests {
             let (book, _) = builder.finish();
 
             let len = |symbol| {
-                book.get(symbol).map_or(0, |code| code.len())
+                book.get(symbol).map_or(0, bit_vec::BitVec::len)
             };
 
             at >= ct || len("CT") <= len("AT") ||
