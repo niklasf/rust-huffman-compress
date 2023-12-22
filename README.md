@@ -69,6 +69,9 @@ Documentation
 Changelog
 ---------
 
+* to be released
+  - Switch to 2021 edition.
+
 * 0.6.1
   - Fix deprecation warning and remove `#[deny(warnings)]` (a future
     compatibility hazard in libraries).

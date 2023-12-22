@@ -8,6 +8,7 @@ readme = "README.md"
 repository = "https://github.com/niklasf/rust-huffman-compress"
 categories = ["compression", "encoding", "algorithms"]
 description = "Huffman compression given a probability distribution over arbitrary symbols"
+edition = "2021"
 
 [[bench]]
 name = "benches"
@@ -18,7 +19,7 @@ bit-vec = "0.6"
 num-traits = "0.2"
 
 [dev-dependencies]
-bencher = "0.1"
+criterion = "0.5"
 quickcheck = "1"
 
 [badges]

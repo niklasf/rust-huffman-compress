@@ -17,7 +17,7 @@
 //!
 //! # use std::error::Error;
 //! #
-//! # fn try_main() -> Result<(), Box<Error>> {
+//! # fn try_main() -> Result<(), Box<dyn Error>> {
 //! use std::iter::FromIterator;
 //! use std::collections::HashMap;
 //! use bit_vec::BitVec;
@@ -60,13 +60,8 @@
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
-
-extern crate bit_vec;
-extern crate num_traits;
-
-#[cfg(test)]
-#[macro_use]
-extern crate quickcheck;
+#![warn(clippy::pedantic)]
+#![allow(clippy::manual_let_else)]
 
 use std::borrow::Borrow;
 use std::cmp;
@@ -80,7 +75,7 @@ use bit_vec::BitVec;
 
 use num_traits::ops::saturating::Saturating;
 
-/// A trie used for decoding.
+/// A tree used for decoding.
 #[derive(Debug, Clone)]
 pub struct Tree<K> {
     root: usize,
@@ -153,19 +148,16 @@ impl<'a, K: Clone, I: IntoIterator<Item = bool>> Iterator for UnboundedDecoder<'
     type Item = K;
 
     fn next(&mut self) -> Option<K> {
-        let mut node = match self.tree.arena.get(self.tree.root) {
-            Some(root) => root,
-            None => return None, // empty tree
-        };
+        let mut node = self.tree.arena.get(self.tree.root)?;
 
         loop {
             match node.data {
                 NodeData::Leaf { ref symbol } => return Some(symbol.clone()),
                 NodeData::Branch { left, right } => {
-                    node = match self.iter.next() {
-                        Some(true) => &self.tree.arena[left],
-                        Some(false) => &self.tree.arena[right],
-                        None => return None,
+                    node = if self.iter.next()? {
+                        &self.tree.arena[left]
+                    } else {
+                        &self.tree.arena[right]
                     };
                 }
             }
@@ -181,6 +173,7 @@ pub struct Book<K> {
 
 impl<K: Ord + Clone> Book<K> {
     /// Returns the underlying B-Tree.
+    #[must_use]
     pub fn into_inner(self) -> BTreeMap<K, BitVec> {
         self.book
     }
@@ -196,11 +189,13 @@ impl<K: Ord + Clone> Book<K> {
     }
 
     /// Returns the number of symbols in the book.
+    #[must_use]
     pub fn len(&self) -> usize {
         self.book.len()
     }
 
     /// Returns true if the map has no symbols.
+    #[must_use]
     pub fn is_empty(&self) -> bool {
         self.book.is_empty()
     }
@@ -235,12 +230,7 @@ impl<K: Ord + Clone> Book<K> {
         K: Borrow<Q>,
         Q: Ord,
     {
-        match self.book.get(k) {
-            Some(code) => buffer.extend(code),
-            None => return Err(EncodeError {}),
-        }
-
-        Ok(())
+        self.book.get(k).map(|code| buffer.extend(code)).ok_or(EncodeError {})
     }
 
     fn new() -> Book<K> {
@@ -303,6 +293,7 @@ pub struct CodeBuilder<K: Ord + Clone, W: Saturating + Ord> {
 
 impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
     /// Creates a new, empty `CodeBuilder<K, W>`.
+    #[must_use]
     pub fn new() -> CodeBuilder<K, W> {
         CodeBuilder {
             heap: BinaryHeap::new(),
@@ -312,6 +303,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
 
     /// Creates a new, empty `CodeBuilder<K, W>` and preallocates space
     /// for `capacity` symbols.
+    #[must_use]
     pub fn with_capacity(capacity: usize) -> CodeBuilder<K, W> {
         CodeBuilder {
             heap: BinaryHeap::with_capacity(capacity),
@@ -335,6 +327,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
 
     /// Constructs a [book](struct.Book.html) and [tree](struct.Tree.html) pair
     /// for encoding and decoding.
+    #[must_use]
     pub fn finish(mut self) -> (Book<K>, Tree<K>) {
         let mut book = Book::new();
 
@@ -425,7 +418,7 @@ impl<'a, K: Ord + Clone, W: Saturating + Ord + Clone> FromIterator<(&'a K, &'a W
     where
         T: IntoIterator<Item = (&'a K, &'a W)>,
     {
-        CodeBuilder::from_iter(weights.into_iter().map(|(k, v)| (k.clone(), v.clone())))
+        weights.into_iter().map(|(k, v)| (k.clone(), v.clone())).collect()
     }
 }
 
@@ -469,6 +462,7 @@ where
 #[cfg(test)]
 mod tests {
     use super::*;
+    use quickcheck::quickcheck;
     use std::collections::HashMap;
 
     #[test]
@@ -500,7 +494,7 @@ mod tests {
     #[test]
     fn test_uniform_from_static() {
         const WEIGHTS: &[(&char, &usize)] = &[(&'a', &1), (&'b', &1), (&'c', &1), (&'d', &1)];
-        let (book, tree) = codebook(WEIGHTS.iter().cloned());
+        let (book, tree) = codebook(WEIGHTS.iter().copied());
 
         let mut buffer = BitVec::new();
         book.encode(&mut buffer, &'a').unwrap();
@@ -552,11 +546,11 @@ mod tests {
             let (book, _) = builder.finish();
 
             let len = |symbol| {
-                book.get(symbol).map_or(0, |code| code.len())
+                book.get(symbol).map_or(0, bit_vec::BitVec::len)
             };
 
             at >= ct || len("CT") <= len("AT") ||
-            ag.saturating_add(at).saturating_add(cg).saturating_add(ct).saturating_add(tg) >= u32::MAX
+            ag.saturating_add(at).saturating_add(cg).saturating_add(ct).saturating_add(tg) == u32::MAX
         }
 
         fn encode_decode_bytes(symbols: Vec<u8>) -> bool {
