@@ -7,7 +7,23 @@ given a probability distribution over arbitrary symbols.
 [![Build Status](https://travis-ci.org/niklasf/rust-huffman-compress.svg?branch=master)](https://travis-ci.org/niklasf/rust-huffman-compress)
 [![crates.io](https://img.shields.io/crates/v/huffman-compress.svg)](https://crates.io/crates/huffman-compress)
 [![docs.rs](https://docs.rs/huffman-compress/badge.svg)](https://docs.rs/huffman-compress)
-[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](http://unmaintained.tech/)
+[![No Maintenance Intended](http://unmaintained.tech/badge.svg)](#Alternatives)
+
+Alternatives
+------------
+
+This project has limited real-world utility. It may be useful to experiment
+with or learn about Huffman coding
+(for example, when working on
+[bespoke chess game compression for lichess.org](https://github.com/lichess-org/compression)),
+but there are better entropy coders (both in terms of compression ratio
+and performance) and better implementations.
+
+See [`constriction`](https://crates.io/crates/constriction) for composable
+entropy coders, models and streams.
+
+See [`arcode`](https://crates.io/crates/arcode) for a standalone implementation
+of arithmetic coding.
 
 Examples
 --------
