@@ -25,6 +25,16 @@ entropy coders, models and streams.
 See [`arcode`](https://crates.io/crates/arcode) for a standalone implementation
 of arithmetic coding.
 
+Feature
+-------
+
+If you want serde support, include the feature like this:
+
+```
+[dependencies]
+bit-vec = { version = "0.6", features = ["serde"] }
+```
+
 Examples
 --------
 

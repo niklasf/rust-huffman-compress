@@ -1,6 +1,6 @@
 [package]
 name = "huffman-compress"
-version = "0.6.1" # remember to update html_root_url and changelog
+version = "0.6.1"                                                                           # remember to update html_root_url and changelog
 authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 license = "MIT OR Apache-2.0"
 keywords = ["huffman", "compression", "decompression"]
@@ -16,6 +16,9 @@ harness = false
 [dependencies]
 bit-vec = "0.6"
 num-traits = "0.2"
+serde = { version = "1.0.164", default-features = false, optional = true, features = [
+    "derive",
+] }
 
 [dev-dependencies]
 bencher = "0.1"
@@ -23,3 +26,7 @@ quickcheck = "1"
 
 [badges]
 travis-ci = { repository = "niklasf/rust-huffman-compress", branch = "master" }
+
+[features]
+default = []
+serde = ["serde/std"]

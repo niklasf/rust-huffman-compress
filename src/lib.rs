@@ -80,19 +80,27 @@ use bit_vec::BitVec;
 
 use num_traits::ops::saturating::Saturating;
 
+#[cfg(feature = "serde")]
+extern crate serde;
+#[cfg(feature = "serde")]
+use serde::{Deserialize, Serialize};
+
 /// A trie used for decoding.
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 pub struct Tree<K> {
     root: usize,
     arena: Vec<Node<K>>,
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 struct Node<K> {
     parent: Option<usize>,
     data: NodeData<K>,
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
 enum NodeData<K> {
     Leaf { symbol: K },
