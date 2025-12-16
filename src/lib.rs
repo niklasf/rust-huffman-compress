@@ -153,10 +153,7 @@ impl<'a, K: Clone, I: IntoIterator<Item = bool>> Iterator for UnboundedDecoder<'
     type Item = K;
 
     fn next(&mut self) -> Option<K> {
-        let mut node = match self.tree.arena.get(self.tree.root) {
-            Some(root) => root,
-            None => return None, // empty tree
-        };
+        let mut node = self.tree.arena.get(self.tree.root)?;
 
         loop {
             match node.data {
@@ -206,19 +203,19 @@ impl<K: Ord + Clone> Book<K> {
     }
 
     /// Returns the code word for a given symbol.
-    pub fn get<Q: ?Sized>(&self, k: &Q) -> Option<&BitVec>
+    pub fn get<Q>(&self, k: &Q) -> Option<&BitVec>
     where
         K: Borrow<Q>,
-        Q: Ord,
+        Q: ?Sized + Ord,
     {
         self.book.get(k)
     }
 
     /// Returns true if the book contains the specified symbol.
-    pub fn contains_symbol<Q: ?Sized>(&self, k: &Q) -> bool
+    pub fn contains_symbol<Q>(&self, k: &Q) -> bool
     where
         K: Borrow<Q>,
-        Q: Ord,
+        Q: ?Sized + Ord,
     {
         self.book.contains_key(k)
     }
@@ -230,10 +227,10 @@ impl<K: Ord + Clone> Book<K> {
     /// Returns [`EncodeError`] if `k` is not in the codebook.
     ///
     /// [`EncodeError`]: struct.EncodeError.html
-    pub fn encode<Q: ?Sized>(&self, buffer: &mut BitVec, k: &Q) -> Result<(), EncodeError>
+    pub fn encode<Q>(&self, buffer: &mut BitVec, k: &Q) -> Result<(), EncodeError>
     where
         K: Borrow<Q>,
-        Q: Ord,
+        Q: ?Sized + Ord,
     {
         match self.book.get(k) {
             Some(code) => buffer.extend(code),
@@ -556,7 +553,7 @@ mod tests {
             };
 
             at >= ct || len("CT") <= len("AT") ||
-            ag.saturating_add(at).saturating_add(cg).saturating_add(ct).saturating_add(tg) >= u32::MAX
+            ag.saturating_add(at).saturating_add(cg).saturating_add(ct).saturating_add(tg) == u32::MAX
         }
 
         fn encode_decode_bytes(symbols: Vec<u8>) -> bool {
