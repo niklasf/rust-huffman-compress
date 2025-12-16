@@ -56,7 +56,7 @@ for symbol in &example {
 }
 
 // Decode the symbols using the tree.
-let decoded: Vec<&str> = tree.decoder(&buffer).collect();
+let decoded: Vec<&str> = tree.decoder(&buffer, example.len()).collect();
 assert_eq!(decoded, example);
 ```
 
