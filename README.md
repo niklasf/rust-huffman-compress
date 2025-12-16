@@ -68,6 +68,8 @@ Documentation
 Changelog
 ---------
 
+* 0.7.0
+  - Update to `bit-vec` 0.8.
 * 0.6.1
   - Fix deprecation warning and remove `#[deny(warnings)]` (a future
     compatibility hazard in libraries).

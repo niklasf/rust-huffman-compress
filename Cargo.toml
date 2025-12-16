@@ -1,6 +1,6 @@
 [package]
 name = "huffman-compress"
-version = "0.6.1" # remember to update html_root_url and changelog
+version = "0.7.0" # remember to update html_root_url and changelog
 authors = ["Niklas Fiekas <niklas.fiekas@backscattering.de>"]
 license = "MIT OR Apache-2.0"
 keywords = ["huffman", "compression", "decompression"]

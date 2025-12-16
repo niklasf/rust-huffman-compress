@@ -1,11 +1,3 @@
-// Copyright 2018 Niklas Fiekas <niklas.fiekas@backscattering.de>
-//
-// Licensed under the Apache License, Version 2.0 <LICENSE-APACHE or
-// http://www.apache.org/licenses/LICENSE-2.0> or the MIT license
-// <LICENSE-MIT or http://opensource.org/licenses/MIT>, at your
-// option. This file may not be copied, modified, or distributed
-// except according to those terms.
-
 //! [Huffman compression](https://en.wikipedia.org/wiki/Huffman_coding)
 //! given a probability distribution over arbitrary symbols.
 //!
@@ -56,7 +48,7 @@
 //! # }
 //! ```
 
-#![doc(html_root_url = "https://docs.rs/huffman-compress/0.6.1")]
+#![doc(html_root_url = "https://docs.rs/huffman-compress/0.7.0")]
 #![forbid(unsafe_code)]
 #![deny(missing_docs)]
 #![deny(missing_debug_implementations)]
