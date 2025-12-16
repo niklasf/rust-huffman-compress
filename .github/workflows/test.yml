@@ -1,0 +1,26 @@
+name: Test
+
+on:
+  - push
+  - pull_request
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        toolchain:
+          - "1.67"
+          - stable
+          - beta
+          - nightly
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: ${{ matrix.toolchain }}
+      - run: cargo test
+      - run: cargo bench
+      - run: cargo doc
+        env:
+          RUSTDOCFLAGS: "-D warnings"
