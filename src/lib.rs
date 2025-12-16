@@ -17,7 +17,7 @@
 //!
 //! # use std::error::Error;
 //! #
-//! # fn try_main() -> Result<(), Box<Error>> {
+//! # fn try_main() -> Result<(), Box<dyn Error>> {
 //! use std::iter::FromIterator;
 //! use std::collections::HashMap;
 //! use bit_vec::BitVec;
@@ -111,7 +111,7 @@ impl<K: Clone> Tree<K> {
     ///
     /// If the source is exhausted no further symbols will be decoded
     /// (not even incomplete ones).
-    pub fn unbounded_decoder<I>(&self, iterable: I) -> UnboundedDecoder<K, I>
+    pub fn unbounded_decoder<I>(&self, iterable: I) -> UnboundedDecoder<'_, K, I>
     where
         I: IntoIterator<Item = bool>,
     {
@@ -130,7 +130,7 @@ impl<K: Clone> Tree<K> {
     ///
     /// If the source is exhausted no further symbols will be decoded
     /// (not even incomplete ones).
-    pub fn decoder<I>(&self, iterable: I, num_symbols: usize) -> Decoder<K, I>
+    pub fn decoder<I>(&self, iterable: I, num_symbols: usize) -> Decoder<'_, K, I>
     where
         I: IntoIterator<Item = bool>,
     {
@@ -186,12 +186,12 @@ impl<K: Ord + Clone> Book<K> {
     }
 
     /// An iterator over all symbols in sorted order.
-    pub fn symbols(&self) -> btree_map::Keys<K, BitVec> {
+    pub fn symbols(&self) -> btree_map::Keys<'_, K, BitVec> {
         self.book.keys()
     }
 
     /// An iterator over all symbol and code word pairs, sorted by symbol.
-    pub fn iter(&self) -> btree_map::Iter<K, BitVec> {
+    pub fn iter(&self) -> btree_map::Iter<'_, K, BitVec> {
         self.book.iter()
     }
 

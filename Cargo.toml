@@ -9,6 +9,7 @@ repository = "https://github.com/niklasf/rust-huffman-compress"
 categories = ["compression", "encoding", "algorithms"]
 description = "Huffman compression given a probability distribution over arbitrary symbols"
 rust-version = "1.67"
+edition = "2021"
 
 [[bench]]
 name = "benches"
