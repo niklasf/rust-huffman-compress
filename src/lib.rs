@@ -68,16 +68,17 @@ extern crate num_traits;
 #[macro_use]
 extern crate quickcheck;
 
-use std::borrow::Borrow;
-use std::cmp;
-use std::cmp::Reverse;
-use std::collections::{btree_map, BTreeMap, BinaryHeap};
-use std::error::Error;
-use std::fmt;
-use std::iter::{FromIterator, Take};
+use std::{
+    borrow::Borrow,
+    cmp,
+    cmp::Reverse,
+    collections::{btree_map, BTreeMap, BinaryHeap},
+    error::Error,
+    fmt,
+    iter::{FromIterator, Take},
+};
 
 use bit_vec::BitVec;
-
 use num_traits::ops::saturating::Saturating;
 
 /// A trie used for decoding.
@@ -375,6 +376,7 @@ impl<K: Ord + Clone, W: Saturating + Ord> CodeBuilder<K, W> {
         };
 
         book.build(&self.arena, &self.arena[root.id], BitVec::new());
+
         (
             book,
             Tree {
@@ -465,8 +467,9 @@ where
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::collections::HashMap;
+
+    use super::*;
 
     #[test]
     fn test_uniform() {
